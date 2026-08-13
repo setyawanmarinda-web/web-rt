@@ -1,12 +1,12 @@
 export interface Warga {
   id: string;
-  nik: string;
   nama_lengkap: string;
+  tanggal_lahir?: string;
   status_tinggal: 'Tetap' | 'Kontrak';
   rt: string;
   rw: string;
   no_hp?: string;
-  alamat?: string;
+  alamat: string;
   created_at: string;
 }
 
@@ -19,9 +19,10 @@ export interface KasRT {
   rt: string;
   metode: 'Cash' | 'Transfer' | 'Split' | 'Titipan';
   nama_pembayar?: string;
-  nama_perantara?: string;
+  perantara_list?: { nama: string; alamat: string }[];
   rincian_split?: string;
   diskon_keringanan?: boolean;
+  tanggal_transaksi?: string;
   created_at: string;
 }
 
@@ -61,7 +62,7 @@ export interface UMKM {
 export interface Surat {
   id: string;
   no_surat: string;
-  nik: string;
+  tanggal_lahir?: string;
   nama_pemohon: string;
   jenis_surat: 'Surat Pengantar KTP' | 'SKTM' | 'Surat Domisili' | 'Lainnya';
   keperluan: string;
@@ -79,31 +80,27 @@ export interface Arsip {
   ukuran: string;
 }
 
+// Helper list RT 001 s/d RT 010 (Default RT 002)
+export const RT_LIST = ['001', '002', '003', '004', '005', '006', '007', '008', '009', '010'];
+
 // Initial Mock Datasets
 export const INITIAL_WARGA: Warga[] = [
-  { id: 'w-1', nik: '3275011203840001', nama_lengkap: 'Budi Santoso', status_tinggal: 'Tetap', rt: '002', rw: '012', no_hp: '081234567890', alamat: 'Blok A1 No. 4', created_at: '2026-01-10T08:00:00Z' },
-  { id: 'w-2', nik: '3275015507890002', nama_lengkap: 'Siti Aminah (Lansia)', status_tinggal: 'Tetap', rt: '002', rw: '012', no_hp: '081398765432', alamat: 'Blok A1 No. 8', created_at: '2026-01-12T09:30:00Z' },
-  { id: 'w-3', nik: '3275012211910003', nama_lengkap: 'Anton Wijaya', status_tinggal: 'Kontrak', rt: '002', rw: '012', no_hp: '085611223344', alamat: 'Blok B2 No. 12', created_at: '2026-02-01T14:15:00Z' },
-  { id: 'w-4', nik: '3275014402850004', nama_lengkap: 'Ibu Virna Kusuma', status_tinggal: 'Tetap', rt: '002', rw: '012', no_hp: '081777889900', alamat: 'Blok A1 No. 5', created_at: '2026-01-15T11:00:00Z' },
-  { id: 'w-5', nik: '3275010909780005', nama_lengkap: 'Bambang Herdian', status_tinggal: 'Tetap', rt: '001', rw: '012', no_hp: '081900112233', alamat: 'Blok C3 No. 1', created_at: '2026-02-10T10:00:00Z' },
-  { id: 'w-6', nik: '3275016704950006', nama_lengkap: 'Dewi Lestari', status_tinggal: 'Kontrak', rt: '003', rw: '012', no_hp: '081299887766', alamat: 'Blok D1 No. 7', created_at: '2026-03-05T16:20:00Z' },
+  { id: 'w-1', nama_lengkap: 'Budi Santoso', tanggal_lahir: '1984-03-12', status_tinggal: 'Tetap', rt: '002', rw: '012', no_hp: '081234567890', alamat: 'Blok A1 No. 4', created_at: '2026-01-10T08:00:00Z' },
+  { id: 'w-2', nama_lengkap: 'Siti Aminah (Lansia)', tanggal_lahir: '1955-07-20', status_tinggal: 'Tetap', rt: '002', rw: '012', no_hp: '081398765432', alamat: 'Blok A1 No. 8', created_at: '2026-01-12T09:30:00Z' },
+  { id: 'w-3', nama_lengkap: 'Anton Wijaya', tanggal_lahir: '1991-11-22', status_tinggal: 'Kontrak', rt: '002', rw: '012', no_hp: '085611223344', alamat: 'Blok B2 No. 12', created_at: '2026-02-01T14:15:00Z' },
+  { id: 'w-4', nama_lengkap: 'Ibu Virna Kusuma', tanggal_lahir: '1985-02-14', status_tinggal: 'Tetap', rt: '002', rw: '012', no_hp: '081777889900', alamat: 'Blok A1 No. 5', created_at: '2026-01-15T11:00:00Z' },
+  { id: 'w-5', nama_lengkap: 'Bambang Herdian', tanggal_lahir: '1978-09-09', status_tinggal: 'Tetap', rt: '001', rw: '012', no_hp: '081900112233', alamat: 'Blok C3 No. 1', created_at: '2026-02-10T10:00:00Z' },
+  { id: 'w-6', nama_lengkap: 'Dewi Lestari', tanggal_lahir: '1995-04-17', status_tinggal: 'Kontrak', rt: '003', rw: '012', no_hp: '081299887766', alamat: 'Blok D1 No. 7', created_at: '2026-03-05T16:20:00Z' },
 ];
 
 export const INITIAL_KAS: KasRT[] = [
-  { id: 'k-1', keterangan: '[Satpam & Sampah] Iuran Wajib Pak Budi - Agustus 2026', jumlah: 28000, jenis: 'Masuk', pos: 'Satpam & Sampah', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', created_at: '2026-08-01T10:00:00Z' },
-  { id: 'k-2', keterangan: '[Kas RT] Alokasi Iuran RT Pak Budi', jumlah: 12000, jenis: 'Masuk', pos: 'Kas RT', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', created_at: '2026-08-01T10:00:00Z' },
-  { id: 'k-3', keterangan: '[Dana Sosial] Alokasi Dansos Pak Budi', jumlah: 5000, jenis: 'Masuk', pos: 'Dana Sosial', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', created_at: '2026-08-01T10:00:00Z' },
-  { id: 'k-4', keterangan: '[17an] Alokasi Dana 17 Agustus Pak Budi', jumlah: 5000, jenis: 'Masuk', pos: '17an', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', created_at: '2026-08-01T10:00:00Z' },
-  { id: 'k-5', keterangan: '[THR] Alokasi Tabungan THR Pak Budi', jumlah: 5000, jenis: 'Masuk', pos: 'THR', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', created_at: '2026-08-01T10:00:00Z' },
-  // Skenario khusus Titipan
-  { id: 'k-6', keterangan: '[Satpam & Sampah] Iuran Titip via Ibu Virna (Pak Hendra)', jumlah: 28000, jenis: 'Masuk', pos: 'Satpam & Sampah', rt: '002', metode: 'Titipan', nama_pembayar: 'Pak Hendra', nama_perantara: 'Ibu Virna', created_at: '2026-08-03T11:20:00Z' },
-  // Skenario khusus Split Payment
-  { id: 'k-7', keterangan: '[Kas RT] Split Payment Pak Anton (Cash Rp 25k + TF Rp 30k)', jumlah: 55000, jenis: 'Masuk', pos: 'Kas RT', rt: '002', metode: 'Split', nama_pembayar: 'Anton Wijaya', rincian_split: 'Cash Rp 25.000 + TF Rp 30.000', created_at: '2026-08-05T15:45:00Z' },
-  // Skenario Diskon / Keringanan Lansia
-  { id: 'k-8', keterangan: '[Satpam & Sampah] Keringanan Lansia / Janda Bu Siti Aminah (Khusus Kebersihan)', jumlah: 28000, jenis: 'Masuk', pos: 'Satpam & Sampah', rt: '002', metode: 'Cash', nama_pembayar: 'Siti Aminah', diskon_keringanan: true, created_at: '2026-08-06T09:10:00Z' },
-  // Pengeluaran
-  { id: 'k-9', keterangan: '[Kas RT] Pembelian Lampu LED POS Ronda RT 002', jumlah: 150000, jenis: 'Keluar', pos: 'Kas RT', rt: '002', metode: 'Cash', created_at: '2026-08-08T19:30:00Z' },
-  { id: 'k-10', keterangan: '[Dana Sosial] Santunan Warga Sakit (Pak Supri)', jumlah: 300000, jenis: 'Keluar', pos: 'Dana Sosial', rt: '002', metode: 'Cash', created_at: '2026-08-10T14:00:00Z' }
+  { id: 'k-1', keterangan: '[Satpam & Sampah] Iuran Wajib Pak Budi', jumlah: 28000, jenis: 'Masuk', pos: 'Satpam & Sampah', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', tanggal_transaksi: '2026-08-01', created_at: '2026-08-01T10:00:00Z' },
+  { id: 'k-2', keterangan: '[Kas RT] Alokasi Iuran RT Pak Budi', jumlah: 12000, jenis: 'Masuk', pos: 'Kas RT', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', tanggal_transaksi: '2026-08-01', created_at: '2026-08-01T10:00:00Z' },
+  { id: 'k-3', keterangan: '[Dana Sosial] Alokasi Dansos Pak Budi', jumlah: 5000, jenis: 'Masuk', pos: 'Dana Sosial', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', tanggal_transaksi: '2026-08-01', created_at: '2026-08-01T10:00:00Z' },
+  { id: 'k-6', keterangan: '[Satpam & Sampah] Iuran Titip via Ibu Virna (Blok A1 No 5) & Pak Joko (Blok A1 No 6)', jumlah: 56000, jenis: 'Masuk', pos: 'Satpam & Sampah', rt: '002', metode: 'Titipan', nama_pembayar: 'Pak Hendra & Pak Supri', perantara_list: [{ nama: 'Ibu Virna', alamat: 'Blok A1 No 5' }, { nama: 'Pak Joko', alamat: 'Blok A1 No 6' }], tanggal_transaksi: '2026-08-03', created_at: '2026-08-03T11:20:00Z' },
+  { id: 'k-7', keterangan: '[Kas RT] Split Payment Pak Anton (Cash Rp 25k + TF Rp 30k)', jumlah: 55000, jenis: 'Masuk', pos: 'Kas RT', rt: '002', metode: 'Split', nama_pembayar: 'Anton Wijaya', rincian_split: 'Cash Rp 25.000 + TF Rp 30.000', tanggal_transaksi: '2026-08-05', created_at: '2026-08-05T15:45:00Z' },
+  { id: 'k-8', keterangan: '[Satpam & Sampah] Keringanan Lansia Bu Siti Aminah', jumlah: 28000, jenis: 'Masuk', pos: 'Satpam & Sampah', rt: '002', metode: 'Cash', nama_pembayar: 'Siti Aminah', diskon_keringanan: true, tanggal_transaksi: '2026-08-06', created_at: '2026-08-06T09:10:00Z' },
+  { id: 'k-9', keterangan: '[Kas RT] Pembelian Lampu LED POS Ronda RT 002', jumlah: 150000, jenis: 'Keluar', pos: 'Kas RT', rt: '002', metode: 'Cash', tanggal_transaksi: '2026-08-08', created_at: '2026-08-08T19:30:00Z' },
 ];
 
 export const INITIAL_KEGIATAN: Kegiatan[] = [
@@ -124,9 +121,9 @@ export const INITIAL_UMKM: UMKM[] = [
 ];
 
 export const INITIAL_SURAT: Surat[] = [
-  { id: 's-1', no_surat: 'SRT/2026/08/001', nik: '3275011203840001', nama_pemohon: 'Budi Santoso', jenis_surat: 'Surat Pengantar KTP', keperluan: 'Perpanjangan KTP elektronik yang hilang', rt: '002', tanggal_pengajuan: '2026-08-09', status: 'Disetujui' },
-  { id: 's-2', no_surat: 'SRT/2026/08/002', nik: '3275015507890002', nama_pemohon: 'Siti Aminah', jenis_surat: 'SKTM', keperluan: 'Pengajuan Bantuan BPJS Kesehatan PBI', rt: '002', tanggal_pengajuan: '2026-08-11', status: 'Diproses' },
-  { id: 's-3', no_surat: 'SRT/2026/08/003', nik: '3275012211910003', nama_pemohon: 'Anton Wijaya', jenis_surat: 'Surat Domisili', keperluan: 'Kelengkapan berkas domisili tempat tinggal sementara', rt: '002', tanggal_pengajuan: '2026-08-12', status: 'Pending' },
+  { id: 's-1', no_surat: 'SRT/2026/08/001', nama_pemohon: 'Budi Santoso', tanggal_lahir: '1984-03-12', jenis_surat: 'Surat Pengantar KTP', keperluan: 'Perpanjangan KTP elektronik yang hilang', rt: '002', tanggal_pengajuan: '2026-08-09', status: 'Disetujui' },
+  { id: 's-2', no_surat: 'SRT/2026/08/002', nama_pemohon: 'Siti Aminah', tanggal_lahir: '1955-07-20', jenis_surat: 'SKTM', keperluan: 'Pengajuan Bantuan BPJS Kesehatan PBI', rt: '002', tanggal_pengajuan: '2026-08-11', status: 'Diproses' },
+  { id: 's-3', no_surat: 'SRT/2026/08/003', nama_pemohon: 'Anton Wijaya', tanggal_lahir: '1991-11-22', jenis_surat: 'Surat Domisili', keperluan: 'Kelengkapan berkas domisili tempat tinggal sementara', rt: '002', tanggal_pengajuan: '2026-08-12', status: 'Pending' },
 ];
 
 export const INITIAL_ARSIP: Arsip[] = [

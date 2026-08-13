@@ -7,6 +7,7 @@ import {
   BarChart3, FolderArchive, FileText, FileSpreadsheet, Settings,
   Shield, X
 } from 'lucide-react';
+import { RT_LIST } from '@/lib/types';
 
 interface SidebarProps {
   selectedRt: string;
@@ -65,7 +66,7 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
           </button>
         </div>
 
-        {/* Selector RT active scope */}
+        {/* Selector RT active scope (RT 001 - RT 010, default RT 002) */}
         <div className="p-4 border-b border-slate-800/80 bg-slate-950/40">
           <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
             Scope RT Aktif:
@@ -75,11 +76,11 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
             onChange={(e) => onRtChange(e.target.value)}
             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 font-medium cursor-pointer transition-colors"
           >
-            <option value="002">RT 002 (Default Focus)</option>
-            <option value="001">RT 001</option>
-            <option value="003">RT 003</option>
-            <option value="004">RT 004</option>
-            <option value="005">RT 005</option>
+            {RT_LIST.map((rt) => (
+              <option key={rt} value={rt}>
+                RT {rt} {rt === '002' ? '(Default Focus)' : ''}
+              </option>
+            ))}
             <option value="ALL">Gabungan Semua RT (Admin RW)</option>
           </select>
         </div>

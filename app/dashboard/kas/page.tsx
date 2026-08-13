@@ -2,31 +2,45 @@
 
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
-import { KasRT, Warga } from '@/lib/types';
+import { KasRT, Warga, RT_LIST } from '@/lib/types';
 import {
   Wallet, TrendingUp, TrendingDown, Users, PlusCircle, UserPlus,
-  HelpCircle, CreditCard, Sparkles, CheckCircle2, ShieldCheck, ArrowUpRight, ArrowDownRight, Tag, ArrowRight
+  HelpCircle, CreditCard, Sparkles, CheckCircle2, ShieldCheck, ArrowUpRight, ArrowDownRight, Tag, ArrowRight, Plus, Trash2, Calendar
 } from 'lucide-react';
+
+interface PerantaraItem {
+  nama: string;
+  alamat: string;
+}
 
 export default function KasDashboardPage() {
   const { selectedRt, kasList, wargaList, addKasTransaction, addWarga, getKasSummaryByRt } = useSimStore();
 
   const summary = getKasSummaryByRt(selectedRt);
 
-  // Form State Catat Transaksi Iuran (Dengan Fitur Skenario Lapangan Khusus)
+  // Form State Catat Transaksi Iuran
   const [transType, setTransType] = useState<'Masuk' | 'Keluar'>('Masuk');
   const [selectedPos, setSelectedPos] = useState<KasRT['pos']>('Kas RT');
   const [amount, setAmount] = useState<number>(55000);
   const [metode, setMetode] = useState<KasRT['metode']>('Transfer');
   const [namaPembayar, setNamaPembayar] = useState<string>('');
-  const [namaPerantara, setNamaPerantara] = useState<string>('');
   const [rincianSplit, setRincianSplit] = useState<string>('');
   const [diskonKeringanan, setDiskonKeringanan] = useState<boolean>(false);
   const [catatanText, setCatatanText] = useState<string>('');
+  
+  // Tanggal Otomatis (Default hari ini YYYY-MM-DD)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [tanggalTransaksi, setTanggalTransaksi] = useState<string>(todayStr);
+
+  // Dynamic Multiple Perantara/Titipan List (Nama & Alamat)
+  const [perantaraList, setPerantaraList] = useState<PerantaraItem[]>([
+    { nama: '', alamat: '' }
+  ]);
 
   // Form State Tambah Warga
-  const [nik, setNik] = useState<string>('');
   const [namaWarga, setNamaWarga] = useState<string>('');
+  const [tanggalLahirWarga, setTanggalLahirWarga] = useState<string>('');
+  const [alamatWarga, setAlamatWarga] = useState<string>('');
   const [statusTinggal, setStatusTinggal] = useState<'Tetap' | 'Kontrak'>('Tetap');
   const [rtWarga, setRtWarga] = useState<string>(selectedRt === 'ALL' ? '002' : selectedRt);
 
@@ -38,7 +52,23 @@ export default function KasDashboardPage() {
     setTimeout(() => setNotification(null), 4000);
   };
 
-  // Preset Handler Nominal Iuran Standard & Skenario Keringanan
+  // Add & Remove Dynamic Perantara Item
+  const handleAddPerantara = () => {
+    setPerantaraList([...perantaraList, { nama: '', alamat: '' }]);
+  };
+
+  const handleRemovePerantara = (index: number) => {
+    if (perantaraList.length === 1) return;
+    setPerantaraList(perantaraList.filter((_, i) => i !== index));
+  };
+
+  const handlePerantaraChange = (index: number, field: 'nama' | 'alamat', value: string) => {
+    const updated = [...perantaraList];
+    updated[index][field] = value;
+    setPerantaraList(updated);
+  };
+
+  // Presets
   const applyPresetStandard = () => {
     setAmount(55000);
     setSelectedPos('Kas RT');
@@ -59,8 +89,12 @@ export default function KasDashboardPage() {
 
     let fullKeterangan = `[${selectedPos}] ${catatanText || (transType === 'Masuk' ? `Iuran Warga (${namaPembayar})` : 'Pengeluaran Operasional RT')}`;
 
-    if (metode === 'Titipan' && namaPerantara) {
-      fullKeterangan += ` - Titip via ${namaPerantara}`;
+    if (metode === 'Titipan') {
+      const validPerantara = perantaraList.filter(p => p.nama.trim() !== '');
+      if (validPerantara.length > 0) {
+        const titipanDetails = validPerantara.map(p => `${p.nama}${p.alamat ? ` (${p.alamat})` : ''}`).join(', ');
+        fullKeterangan += ` - Titip via: ${titipanDetails}`;
+      }
     } else if (metode === 'Split' && rincianSplit) {
       fullKeterangan += ` (${rincianSplit})`;
     }
@@ -73,36 +107,39 @@ export default function KasDashboardPage() {
       rt: selectedRt === 'ALL' ? '002' : selectedRt,
       metode: metode,
       nama_pembayar: namaPembayar,
-      nama_perantara: namaPerantara,
+      perantara_list: metode === 'Titipan' ? perantaraList : undefined,
       rincian_split: rincianSplit,
-      diskon_keringanan: diskonKeringanan
-    });
+      diskon_keringanan: diskonKeringanan,
+      tanggal_transaksi: tanggalTransaksi
+    } as any);
 
     showToast(`✅ Transaksi ${transType} Rp ${Number(amount).toLocaleString('id-ID')} berhasil dicatat!`);
 
     // Reset Form
     setCatatanText('');
     setNamaPembayar('');
-    setNamaPerantara('');
+    setPerantaraList([{ nama: '', alamat: '' }]);
     setRincianSplit('');
   };
 
-  // Submit New Warga
+  // Submit New Warga (NIK Removed, Tanggal Lahir & Alamat Added)
   const handleWargaSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nik || !namaWarga) return alert('NIK dan Nama Lengkap wajib diisi');
+    if (!namaWarga || !alamatWarga) return alert('Nama Lengkap dan Alamat Rumah wajib diisi');
 
     addWarga({
-      nik,
       nama_lengkap: namaWarga,
+      tanggal_lahir: tanggalLahirWarga,
+      alamat: alamatWarga,
       status_tinggal: statusTinggal,
       rt: rtWarga,
       rw: '012'
-    });
+    } as any);
 
-    showToast(`✅ Data warga "${namaWarga}" berhasil ditambahkan!`);
-    setNik('');
+    showToast(`✅ Data warga "${namaWarga}" (${alamatWarga}) berhasil ditambahkan!`);
     setNamaWarga('');
+    setTanggalLahirWarga('');
+    setAlamatWarga('');
   };
 
   const filteredKas = selectedRt === 'ALL' ? kasList : kasList.filter(k => k.rt === selectedRt);
@@ -128,7 +165,7 @@ export default function KasDashboardPage() {
             </span>
           </div>
           <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-            Pencatatan iuran terpisah 5 pos (Kas RT, Dansos, Satpam & Sampah, 17an, THR) & fleksibilitas skenario transaksi lapangan.
+            Pencatatan iuran terpisah 5 pos (Kas RT, Dansos, Satpam & Sampah, 17an, THR) & multi-titipan via tetangga.
           </p>
         </div>
 
@@ -142,16 +179,14 @@ export default function KasDashboardPage() {
         </div>
       </div>
 
-      {/* Metric Cards - 5 Pos Keuangan (Mobile Swipable Container & Grid) */}
+      {/* Metric Cards */}
       <div>
         <h3 className="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
           <Wallet className="w-4 h-4 text-emerald-400" />
           <span>Rincian Saldo Akumulasi per Pos (RT {selectedRt})</span>
         </h3>
 
-        {/* Scroll Container for Vertical Devices */}
         <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-5 gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
-          
           <div className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-slate-400">1. Satpam & Sampah</span>
@@ -211,7 +246,6 @@ export default function KasDashboardPage() {
             <p className="text-[10px] sm:text-[11px] text-slate-500">Petugas Kebersihan/Ronda</p>
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-500" />
           </div>
-
         </div>
       </div>
 
@@ -227,7 +261,7 @@ export default function KasDashboardPage() {
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-white">Form Catat Transaksi Keuangan</h2>
-                <p className="text-xs text-slate-400">Pembayaran titipan, split cash/transfer, & diskon lansia</p>
+                <p className="text-xs text-slate-400">Fitur tanggal otomatis, multi-titipan via tetangga (nama & alamat)</p>
               </div>
             </div>
 
@@ -260,6 +294,37 @@ export default function KasDashboardPage() {
 
           <form onSubmit={handleKasSubmit} className="space-y-4 sm:space-y-5">
             
+            {/* Tanggal Transaksi Otomatis */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                  Tanggal Transaksi (Otomatis Klik Datepicker) *
+                </label>
+                <input
+                  type="date"
+                  value={tanggalTransaksi}
+                  onChange={(e) => setTanggalTransaksi(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Nominal Transaksi (Rp) *
+                </label>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(Number(e.target.value))}
+                  placeholder="55000"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white font-bold focus:outline-none focus:border-emerald-500"
+                  required
+                />
+              </div>
+            </div>
+
             {/* Presets Quick Buttons */}
             {transType === 'Masuk' && (
               <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800/80 flex flex-col sm:flex-row sm:items-center gap-2">
@@ -287,7 +352,6 @@ export default function KasDashboardPage() {
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
               {/* Pos Alokasi */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
@@ -306,25 +370,6 @@ export default function KasDashboardPage() {
                 </select>
               </div>
 
-              {/* Nominal */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Nominal Transaksi (Rp) *
-                </label>
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  placeholder="55000"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white font-bold focus:outline-none focus:border-emerald-500"
-                  required
-                />
-              </div>
-
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
               {/* Metode Pembayaran */}
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
@@ -337,68 +382,93 @@ export default function KasDashboardPage() {
                 >
                   <option value="Transfer">Transfer Bank / QRIS</option>
                   <option value="Cash">Tunai / Cash Langsung</option>
-                  <option value="Titipan">Titipan via Tetangga / Pengurus</option>
+                  <option value="Titipan">Titipan via Tetangga (Multi-Input Nama & Alamat)</option>
                   <option value="Split">Split (Kombinasi Cash + Transfer)</option>
                 </select>
               </div>
-
-              {/* Nama Pembayar / Warga */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Nama Warga Pembayar / Penerima
-                </label>
-                <input
-                  type="text"
-                  value={namaPembayar}
-                  onChange={(e) => setNamaPembayar(e.target.value)}
-                  placeholder="Contoh: Pak Budi Santoso"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
             </div>
 
-            {/* Skenario Khusus Titipan */}
+            {/* Nama Warga Pembayar */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Nama Warga Pembayar / Penerima
+              </label>
+              <input
+                type="text"
+                value={namaPembayar}
+                onChange={(e) => setNamaPembayar(e.target.value)}
+                placeholder="Contoh: Pak Budi Santoso"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            {/* Skenario Khusus Titipan via Tetangga dengan Multiple Dynamic Add (+ Button) */}
             {metode === 'Titipan' && (
-              <div className="p-3.5 bg-emerald-950/30 border border-emerald-500/30 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
-                  <CreditCard className="w-4 h-4 flex-shrink-0" />
-                  <span>Skenario Pembayaran Titipan Lapangan</span>
+              <div className="p-4 bg-emerald-950/30 border border-emerald-500/30 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
+                    <CreditCard className="w-4 h-4 flex-shrink-0" />
+                    <span>Daftar Nama & Alamat Perantara / Tetangga Menitipkan</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddPerantara}
+                    className="flex items-center gap-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-2.5 py-1 rounded-lg text-xs transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Tambah Perantara</span>
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Nama Perantara / Tetangga Yang Menitipkan:
-                  </label>
-                  <input
-                    type="text"
-                    value={namaPerantara}
-                    onChange={(e) => setNamaPerantara(e.target.value)}
-                    placeholder="Contoh: Ibu Virna (Tetangga sebelah)"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-                  />
+
+                <div className="space-y-2">
+                  {perantaraList.map((p, idx) => (
+                    <div key={idx} className="flex flex-col sm:flex-row items-center gap-2 bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                      <div className="w-full sm:w-1/2">
+                        <input
+                          type="text"
+                          value={p.nama}
+                          onChange={(e) => handlePerantaraChange(idx, 'nama', e.target.value)}
+                          placeholder={`Nama Perantara ${idx + 1}`}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                        />
+                      </div>
+                      <div className="w-full sm:w-1/2 flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={p.alamat}
+                          onChange={(e) => handlePerantaraChange(idx, 'alamat', e.target.value)}
+                          placeholder="Alamat / No Rumah (e.g. Blok A1 No 5)"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-md px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                        />
+                        {perantaraList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePerantara(idx)}
+                            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-md"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* Skenario Khusus Split Payment */}
+            {/* Skenario Split Payment */}
             {metode === 'Split' && (
               <div className="p-3.5 bg-purple-950/30 border border-purple-500/30 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-purple-300 font-semibold text-xs">
-                  <CreditCard className="w-4 h-4 flex-shrink-0" />
-                  <span>Rincian Kombinasi Split Payment</span>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">
-                    Tuliskan Rincian Pembagian Cash & Transfer:
-                  </label>
-                  <input
-                    type="text"
-                    value={rincianSplit}
-                    onChange={(e) => setRincianSplit(e.target.value)}
-                    placeholder="Contoh: Cash Rp 25.000 + TF Rp 30.000"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-                  />
-                </div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">
+                  Rincian Kombinasi Cash & Transfer:
+                </label>
+                <input
+                  type="text"
+                  value={rincianSplit}
+                  onChange={(e) => setRincianSplit(e.target.value)}
+                  placeholder="Contoh: Cash Rp 25.000 + TF Rp 30.000"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
               </div>
             )}
 
@@ -411,7 +481,7 @@ export default function KasDashboardPage() {
                 rows={2}
                 value={catatanText}
                 onChange={(e) => setCatatanText(e.target.value)}
-                placeholder="Catatan tambahan misal: Pembayaran iuran bulan Agustus 2026..."
+                placeholder="Catatan tambahan..."
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
               />
             </div>
@@ -430,7 +500,7 @@ export default function KasDashboardPage() {
           </form>
         </div>
 
-        {/* Form Tambah Warga Cepat (4 cols) */}
+        {/* Form Tambah Warga Baru (Alamat, Tanggal Lahir Otomatis, RT 001 - RT 010 Order) */}
         <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-800">
@@ -439,24 +509,11 @@ export default function KasDashboardPage() {
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-white">Pendataan Warga Baru</h2>
-                <p className="text-xs text-slate-400">Registrasi cepat NIK & status tinggal</p>
+                <p className="text-xs text-slate-400">Tanpa NIK, Tanggal Lahir & Alamat Lengkap</p>
               </div>
             </div>
 
             <form onSubmit={handleWargaSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">NIK Warga *</label>
-                <input
-                  type="text"
-                  maxLength={16}
-                  value={nik}
-                  onChange={(e) => setNik(e.target.value)}
-                  placeholder="327501..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 font-mono"
-                  required
-                />
-              </div>
-
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Nama Lengkap *</label>
                 <input
@@ -469,23 +526,49 @@ export default function KasDashboardPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-teal-400" />
+                  Tanggal Lahir (Klik Datepicker)
+                </label>
+                <input
+                  type="date"
+                  value={tanggalLahirWarga}
+                  onChange={(e) => setTanggalLahirWarga(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 cursor-pointer"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Alamat Rumah Lengkap *</label>
+                <input
+                  type="text"
+                  value={alamatWarga}
+                  onChange={(e) => setAlamatWarga(e.target.value)}
+                  placeholder="Contoh: Blok A1 No. 4"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500"
+                  required
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">RT</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Pilih RT (Urut 001 - 010)</label>
                   <select
                     value={rtWarga}
                     onChange={(e) => setRtWarga(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 font-semibold"
                   >
-                    <option value="002">RT 002</option>
-                    <option value="001">RT 001</option>
-                    <option value="003">RT 003</option>
-                    <option value="004">RT 004</option>
+                    {RT_LIST.map((rt) => (
+                      <option key={rt} value={rt}>
+                        RT {rt} {rt === '002' ? '(Default)' : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Status Tinggal</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Status Tempat Tinggal</label>
                   <select
                     value={statusTinggal}
                     onChange={(e) => setStatusTinggal(e.target.value as any)}
@@ -511,14 +594,14 @@ export default function KasDashboardPage() {
               <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" /> Total Terdata:
             </p>
             <p className="text-slate-400">
-              {wargaList.filter(w => selectedRt === 'ALL' || w.rt === selectedRt).length} Kepala Keluarga / Jiwa di RT {selectedRt}.
+              {wargaList.filter(w => selectedRt === 'ALL' || w.rt === selectedRt).length} Kepala Keluarga di RT {selectedRt}.
             </p>
           </div>
         </div>
 
       </div>
 
-      {/* Riwayat Mutasi Transaksi (Desktop Table & Mobile Card List View Switch) */}
+      {/* Riwayat Mutasi Transaksi */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
           <div>
@@ -529,13 +612,13 @@ export default function KasDashboardPage() {
           <span className="text-xs text-slate-400 font-mono">Total: {filteredKas.length} RECORD</span>
         </div>
 
-        {/* Mobile View: Vertical Cards (< sm) */}
+        {/* Mobile View */}
         <div className="sm:hidden space-y-3">
           {filteredKas.map((item) => (
             <div key={item.id} className="bg-slate-950 border border-slate-800/90 rounded-xl p-3.5 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[11px] text-slate-400">
-                  {new Date(item.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                  {item.tanggal_transaksi || new Date(item.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
                 </span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                   item.metode === 'Titipan'
@@ -569,7 +652,7 @@ export default function KasDashboardPage() {
           ))}
         </div>
 
-        {/* Desktop View: Full Table (>= sm) */}
+        {/* Desktop View */}
         <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-300">
             <thead className="bg-slate-950 text-slate-400 uppercase text-[11px] font-semibold tracking-wider border-b border-slate-800">
@@ -585,7 +668,7 @@ export default function KasDashboardPage() {
               {filteredKas.map((item) => (
                 <tr key={item.id} className="hover:bg-slate-850/50 transition-colors">
                   <td className="px-4 py-3 font-mono text-xs text-slate-400 whitespace-nowrap">
-                    {new Date(item.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {item.tanggal_transaksi || new Date(item.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </td>
 
                   <td className="px-4 py-3 whitespace-nowrap">

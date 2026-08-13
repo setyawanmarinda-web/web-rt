@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
-import { FileText, Clock, CheckCircle2, AlertCircle, Plus } from 'lucide-react';
+import { FileText, Clock, CheckCircle2, AlertCircle, Plus, Calendar } from 'lucide-react';
 
 export default function SuratPage() {
   const { suratList, selectedRt, addSurat, updateSuratStatus } = useSimStore();
 
-  const [nik, setNik] = useState('');
   const [namaPemohon, setNamaPemohon] = useState('');
+  const [tanggalLahir, setTanggalLahir] = useState('');
   const [jenisSurat, setJenisSurat] = useState<'Surat Pengantar KTP' | 'SKTM' | 'Surat Domisili' | 'Lainnya'>('Surat Pengantar KTP');
   const [keperluan, setKeperluan] = useState('');
 
@@ -16,36 +16,36 @@ export default function SuratPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nik || !namaPemohon || !keperluan) return alert('NIK, Nama, dan Keperluan wajib diisi');
+    if (!namaPemohon || !keperluan) return alert('Nama dan Keperluan wajib diisi');
 
     addSurat({
-      nik,
       nama_pemohon: namaPemohon,
+      tanggal_lahir: tanggalLahir,
       jenis_surat: jenisSurat,
       keperluan,
       rt: selectedRt === 'ALL' ? '002' : selectedRt
-    });
+    } as any);
 
-    setNik('');
     setNamaPemohon('');
+    setTanggalLahir('');
     setKeperluan('');
     alert('Pengajuan surat pengantar berhasil didaftarkan!');
   };
 
   return (
-    <div className="space-y-8">
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-white">Layanan Surat Pengantar Warga</h1>
-          <p className="text-slate-400 text-sm">Pengajuan & verifikasi Surat Pengantar KTP, SKTM, & Domisili dengan status tracking</p>
+          <h1 className="text-xl sm:text-2xl font-black text-white">Layanan Surat Pengantar Warga</h1>
+          <p className="text-slate-400 text-xs sm:text-sm">Pengajuan & verifikasi Surat Pengantar KTP, SKTM, & Domisili (Tanpa NIK, Tanggal Lahir otomatis)</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
         
         {/* List Permohonan Surat (8 cols) */}
-        <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-          <h2 className="text-lg font-bold text-white mb-4">Daftar Pengajuan Surat</h2>
+        <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+          <h2 className="text-base sm:text-lg font-bold text-white mb-4">Daftar Pengajuan Surat</h2>
 
           <div className="space-y-3">
             {filteredSurat.map((item) => (
@@ -57,7 +57,7 @@ export default function SuratPage() {
                     <span className="text-xs text-slate-400">{item.tanggal_pengajuan}</span>
                   </div>
                   <h3 className="font-bold text-white text-base">{item.jenis_surat} - {item.nama_pemohon}</h3>
-                  <p className="text-xs text-slate-400 mt-1">Keperluan: {item.keperluan} (NIK: {item.nik})</p>
+                  <p className="text-xs text-slate-400 mt-1">Keperluan: {item.keperluan} {item.tanggal_lahir ? `(Tgl Lahir: ${item.tanggal_lahir})` : ''}</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -86,22 +86,9 @@ export default function SuratPage() {
         </div>
 
         {/* Form Ajukan Surat (4 cols) */}
-        <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
-          <h2 className="text-lg font-bold text-white mb-4">Buat Pengajuan Surat Baru</h2>
+        <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl h-fit">
+          <h2 className="text-base sm:text-lg font-bold text-white mb-4">Buat Pengajuan Surat Baru</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">NIK Pemohon *</label>
-              <input
-                type="text"
-                maxLength={16}
-                value={nik}
-                onChange={(e) => setNik(e.target.value)}
-                placeholder="3275..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono"
-                required
-              />
-            </div>
-
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Nama Pemohon *</label>
               <input
@@ -111,6 +98,19 @@ export default function SuratPage() {
                 placeholder="Nama pemohon sesuai KTP"
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
                 required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                Tanggal Lahir (Klik Datepicker)
+              </label>
+              <input
+                type="date"
+                value={tanggalLahir}
+                onChange={(e) => setTanggalLahir(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
               />
             </div>
 
