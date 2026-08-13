@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
 import { RT_LIST } from '@/lib/types';
 import { Users, BarChart2, UserPlus, CheckCircle2, Calendar, MapPin } from 'lucide-react';
+import DatePickerField from '@/components/DatePickerField';
 
 export default function StatistikPage() {
   const { wargaList, selectedRt, addWarga } = useSimStore();
@@ -161,18 +162,12 @@ export default function StatistikPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-                Tanggal Lahir (Datepicker)
-              </label>
-              <input
-                type="date"
-                value={tanggalLahir}
-                onChange={(e) => setTanggalLahir(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
-              />
-            </div>
+            <DatePickerField
+              label="Tanggal Lahir"
+              value={tanggalLahir}
+              onChange={setTanggalLahir}
+              colorTheme="emerald"
+            />
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Alamat Rumah Lengkap *</label>

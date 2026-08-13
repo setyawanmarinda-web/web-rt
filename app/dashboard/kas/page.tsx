@@ -7,6 +7,7 @@ import {
   Wallet, TrendingUp, TrendingDown, Users, PlusCircle, UserPlus,
   HelpCircle, CreditCard, Sparkles, CheckCircle2, ShieldCheck, ArrowUpRight, ArrowDownRight, Tag, ArrowRight, Plus, Trash2, Calendar
 } from 'lucide-react';
+import DatePickerField from '@/components/DatePickerField';
 
 interface PerantaraItem {
   nama: string;
@@ -296,19 +297,13 @@ export default function KasDashboardPage() {
             
             {/* Tanggal Transaksi Otomatis */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-                  Tanggal Transaksi (Otomatis Klik Datepicker) *
-                </label>
-                <input
-                  type="date"
-                  value={tanggalTransaksi}
-                  onChange={(e) => setTanggalTransaksi(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
-                  required
-                />
-              </div>
+              <DatePickerField
+                label="Tanggal Transaksi"
+                value={tanggalTransaksi}
+                onChange={setTanggalTransaksi}
+                required={true}
+                colorTheme="emerald"
+              />
 
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
@@ -526,18 +521,12 @@ export default function KasDashboardPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-teal-400" />
-                  Tanggal Lahir (Klik Datepicker)
-                </label>
-                <input
-                  type="date"
-                  value={tanggalLahirWarga}
-                  onChange={(e) => setTanggalLahirWarga(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500 cursor-pointer"
-                />
-              </div>
+              <DatePickerField
+                label="Tanggal Lahir"
+                value={tanggalLahirWarga}
+                onChange={setTanggalLahirWarga}
+                colorTheme="teal"
+              />
 
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Alamat Rumah Lengkap *</label>
