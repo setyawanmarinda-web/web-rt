@@ -15,7 +15,7 @@ interface PerantaraItem {
 }
 
 export default function KasDashboardPage() {
-  const { selectedRt, kasList, wargaList, addKasTransaction, addWarga, getKasSummaryByRt } = useSimStore();
+  const { selectedRt, kasList, wargaList, addKasTransaction, addWarga, getKasSummaryByRt, deleteData } = useSimStore();
 
   const summary = getKasSummaryByRt(selectedRt);
 
@@ -141,6 +141,17 @@ export default function KasDashboardPage() {
     setNamaWarga('');
     setTanggalLahirWarga('');
     setAlamatWarga('');
+  };
+
+  const handleDelete = async (id: string, ket: string) => {
+    if (window.confirm(`Yakin ingin menghapus transaksi: ${ket}?`)) {
+      try {
+        await deleteData('kas', id);
+        showToast(`✅ Transaksi berhasil dihapus!`);
+      } catch (err) {
+        alert('Gagal menghapus data.');
+      }
+    }
   };
 
   const filteredKas = selectedRt === 'ALL' ? kasList : kasList.filter(k => k.rt === selectedRt);

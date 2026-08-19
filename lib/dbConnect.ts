@@ -1,47 +1,46 @@
+// lib/dbConnect.ts
+// Singleton Mongoose connection — re-use connection antar API calls di Next.js
+
 import mongoose from 'mongoose';
 
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGO_URI ?? '';
 
 if (!MONGO_URI) {
-  throw new Error('MONGO_URI environment variable tidak terdefinisi');
+  throw new Error(
+    '❌ MONGO_URI tidak ditemukan di environment variables. Pastikan file .env sudah benar.'
+  );
 }
 
-// Cache koneksi untuk development
-let cached = global.mongoose || { conn: null, promise: null };
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+// Cache connection untuk hot-reload Next.js dev mode
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
 }
 
-async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn;
-  }
+declare global {
+  // eslint-disable-next-line no-var
+  var _mongoose: MongooseCache | undefined;
+}
+
+const cached: MongooseCache = global._mongoose ?? { conn: null, promise: null };
+if (!global._mongoose) global._mongoose = cached;
+
+async function dbConnect(): Promise<typeof mongoose> {
+  if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
-
     cached.promise = mongoose
-      .connect(MONGO_URI, opts)
-      .then((mongoose) => {
-        console.log('✅ MongoDB Connected');
-        return mongoose;
+      .connect(MONGO_URI, {
+        bufferCommands: false,
+        dbName: 'webrt',
       })
-      .catch((err) => {
-        console.error('❌ MongoDB Connection Error:', err);
-        throw err;
+      .then((mg) => {
+        console.log('✅ MongoDB Connected');
+        return mg;
       });
   }
 
-  try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    throw e;
-  }
-
+  cached.conn = await cached.promise;
   return cached.conn;
 }
 

@@ -3,11 +3,10 @@
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
 import { RT_LIST } from '@/lib/types';
-import { Users, BarChart2, UserPlus, CheckCircle2, Calendar, MapPin } from 'lucide-react';
-import DatePickerField from '@/components/DatePickerField';
+import { Users, BarChart2, UserPlus, CheckCircle2, Calendar, MapPin, Trash2 } from 'lucide-react';
 
 export default function StatistikPage() {
-  const { wargaList, selectedRt, addWarga } = useSimStore();
+  const { wargaList, selectedRt, addWarga, deleteData } = useSimStore();
 
   const [nama, setNama] = useState('');
   const [tanggalLahir, setTanggalLahir] = useState('');
@@ -42,6 +41,18 @@ export default function StatistikPage() {
     setTanggalLahir('');
     setAlamat('');
   };
+  const handleDelete = async (id: string, nama: string) => {
+    if (window.confirm(`Yakin ingin menghapus data warga ${nama}?`)) {
+      try {
+        await deleteData('warga', id);
+        setToast(`Data warga ${nama} berhasil dihapus.`);
+        setTimeout(() => setToast(null), 3000);
+      } catch (err) {
+        alert('Gagal menghapus data.');
+      }
+    }
+  };
+
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -117,6 +128,7 @@ export default function StatistikPage() {
                   <th className="px-4 py-3">Alamat Rumah</th>
                   <th className="px-4 py-3">RT / RW</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
@@ -134,6 +146,15 @@ export default function StatistikPage() {
                       }`}>
                         {w.status_tinggal}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <button 
+                        onClick={() => handleDelete(w.id, w.nama_lengkap)}
+                        className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors"
+                        title="Hapus Warga"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -162,12 +183,18 @@ export default function StatistikPage() {
               />
             </div>
 
-            <DatePickerField
-              label="Tanggal Lahir"
-              value={tanggalLahir}
-              onChange={setTanggalLahir}
-              colorTheme="emerald"
-            />
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                Tanggal Lahir (Datepicker)
+              </label>
+              <input
+                type="date"
+                value={tanggalLahir}
+                onChange={(e) => setTanggalLahir(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
+              />
+            </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Alamat Rumah Lengkap *</label>

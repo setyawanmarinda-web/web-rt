@@ -11,7 +11,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { selectedRt, setSelectedRt } = useSimStore();
+  const { selectedRt, setSelectedRt, dataMode, setDataMode } = useSimStore();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
@@ -55,6 +55,23 @@ export default function DashboardLayout({
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
                 RT {selectedRt}
               </span>
+              {dataMode === 'dev' ? (
+                <button
+                  onClick={() => setDataMode('live')}
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20 whitespace-nowrap hover:bg-amber-500/20 transition-colors"
+                  title="Switch to LIVE mode"
+                >
+                  🟡 DEV MODE
+                </button>
+              ) : (
+                <button
+                  onClick={() => setDataMode('dev')}
+                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 whitespace-nowrap hover:bg-emerald-500/20 transition-colors"
+                  title="Switch to DEV mode"
+                >
+                  🟢 LIVE (MongoDB)
+                </button>
+              )}
             </div>
           </div>
 

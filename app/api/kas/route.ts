@@ -1,73 +1,55 @@
+// app/api/kas/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
-import { KasRT } from '@/lib/mongoose';
+import { KasRTModel } from '@/lib/mongoose';
 
-export async function GET(request: NextRequest) {
+// GET /api/kas?rt=002   (tanpa rt = semua)
+export async function GET(req: NextRequest) {
   try {
     await dbConnect();
-    
-    const { searchParams } = new URL(request.url);
-    const rt = searchParams.get('rt');
-
-    let query = {};
-    if (rt && rt !== 'ALL') {
-      query = { rt };
-    }
-
-    const kasList = await KasRT.find(query).sort({ created_at: -1 });
-    
-    return NextResponse.json(kasList);
-  } catch (error) {
-    console.error('GET /api/kas error:', error);
-    return NextResponse.json(
-      { error: 'Gagal mengambil data kas' },
-      { status: 500 }
-    );
+    const rt = req.nextUrl.searchParams.get('rt');
+    const query = rt && rt !== 'ALL' ? { rt } : {};
+    const docs = await KasRTModel.find(query).sort({ tanggal_transaksi: -1 }).lean();
+    const data = docs.map((d) => {
+      const obj = { ...d } as Record<string, unknown>;
+      obj.id = (obj._id as { toString(): string })?.toString();
+      delete obj._id;
+      delete obj.__v;
+      return obj;
+    });
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error('[API/kas GET]', err);
+    return NextResponse.json({ error: 'Gagal mengambil data kas' }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+// POST /api/kas
+export async function POST(req: NextRequest) {
   try {
     await dbConnect();
+    const body = await req.json();
+    const doc = await KasRTModel.create(body);
+    const obj = doc.toObject() as Record<string, unknown>;
+    const result = { ...obj, id: (obj._id as { toString(): string })?.toString(), _id: undefined, __v: undefined };
+    return NextResponse.json(result, { status: 201 });
+  } catch (err) {
+    console.error('[API/kas POST]', err);
+    return NextResponse.json({ error: 'Gagal menyimpan transaksi kas' }, { status: 500 });
+  }
+}
 
-    const body = await request.json();
-
-    // Validasi
-    if (!body.jumlah || body.jumlah <= 0) {
-      return NextResponse.json(
-        { error: 'Nominal harus lebih besar dari 0' },
-        { status: 400 }
-      );
-    }
-
-    const newKas = new KasRT({
-      keterangan: body.keterangan || '',
-      jumlah: body.jumlah,
-      jenis: body.jenis || 'Masuk',
-      pos: body.pos || 'Kas RT',
-      rt: body.rt || '002',
-      metode: body.metode || 'Transfer',
-      nama_pembayar: body.nama_pembayar || '',
-      perantara_list: body.perantara_list || [],
-      rincian_split: body.rincian_split || '',
-      diskon_keringanan: body.diskon_keringanan || false,
-      tanggal_transaksi: body.tanggal_transaksi || new Date().toISOString().split('T')[0],
-    });
-
-    const saved = await newKas.save();
-
-    return NextResponse.json(
-      {
-        id: saved._id,
-        ...saved.toObject()
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error('POST /api/kas error:', error);
-    return NextResponse.json(
-      { error: 'Gagal menyimpan transaksi kas' },
-      { status: 500 }
-    );
+// DELETE /api/kas?id=xyz
+export async function DELETE(req: NextRequest) {
+  try {
+    await dbConnect();
+    const id = req.nextUrl.searchParams.get('id');
+    if (!id) return NextResponse.json({ error: 'ID tidak diberikan' }, { status: 400 });
+    const doc = await KasRTModel.findByIdAndDelete(id);
+    if (!doc) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('[API/kas DELETE]', err);
+    return NextResponse.json({ error: 'Gagal menghapus data' }, { status: 500 });
   }
 }

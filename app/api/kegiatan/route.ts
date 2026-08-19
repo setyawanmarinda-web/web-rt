@@ -1,47 +1,51 @@
+// app/api/kegiatan/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
-import { Kegiatan } from '@/lib/mongoose';
+import { KegiatanModel } from '@/lib/mongoose';
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     await dbConnect();
-    
-    const { searchParams } = new URL(request.url);
-    const rt = searchParams.get('rt');
-
-    let query = {};
-    if (rt && rt !== 'ALL') {
-      query = { rt };
-    }
-
-    const kegiatanList = await Kegiatan.find(query).sort({ created_at: -1 });
-    return NextResponse.json(kegiatanList);
-  } catch (error) {
-    console.error('GET /api/kegiatan error:', error);
+    const rt = req.nextUrl.searchParams.get('rt');
+    const query = rt && rt !== 'ALL' ? { rt } : {};
+    const docs = await KegiatanModel.find(query).sort({ tanggal: -1 }).lean();
+    const data = docs.map((d) => {
+      const obj = { ...d } as Record<string, unknown>;
+      obj.id = (obj._id as { toString(): string })?.toString();
+      delete obj._id; delete obj.__v;
+      return obj;
+    });
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error('[API/kegiatan GET]', err);
     return NextResponse.json({ error: 'Gagal mengambil data kegiatan' }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     await dbConnect();
-    const body = await request.json();
+    const body = await req.json();
+    const doc = await KegiatanModel.create(body);
+    const obj = doc.toObject() as Record<string, unknown>;
+    return NextResponse.json({ ...obj, id: (obj._id as { toString(): string })?.toString(), _id: undefined, __v: undefined }, { status: 201 });
+  } catch (err) {
+    console.error('[API/kegiatan POST]', err);
+    return NextResponse.json({ error: 'Gagal menyimpan data kegiatan' }, { status: 500 });
+  }
+}
 
-    const newKegiatan = new Kegiatan({
-      judul: body.judul,
-      deskripsi: body.deskripsi || '',
-      tanggal: body.tanggal,
-      waktu: body.waktu || '',
-      lokasi: body.lokasi || '',
-      rt: body.rt || '002',
-      kategori: body.kategori || 'Lainnya',
-      status: body.status || 'Akan Datang',
-    });
-
-    const saved = await newKegiatan.save();
-    return NextResponse.json({ id: saved._id, ...saved.toObject() }, { status: 201 });
-  } catch (error) {
-    console.error('POST /api/kegiatan error:', error);
-    return NextResponse.json({ error: 'Gagal menyimpan kegiatan' }, { status: 500 });
+// DELETE /api/kegiatan?id=xyz
+export async function DELETE(req: NextRequest) {
+  try {
+    await dbConnect();
+    const id = req.nextUrl.searchParams.get('id');
+    if (!id) return NextResponse.json({ error: 'ID tidak diberikan' }, { status: 400 });
+    const doc = await KegiatanModel.findByIdAndDelete(id);
+    if (!doc) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('[API/kegiatan DELETE]', err);
+    return NextResponse.json({ error: 'Gagal menghapus data' }, { status: 500 });
   }
 }

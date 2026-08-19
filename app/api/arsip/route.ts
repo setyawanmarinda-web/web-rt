@@ -1,28 +1,49 @@
+// app/api/arsip/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
-import { Arsip } from '@/lib/mongoose';
+import { ArsipModel } from '@/lib/mongoose';
 
-export async function GET(request: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     await dbConnect();
-    const list = await Arsip.find().sort({ created_at: -1 });
-    return NextResponse.json(list);
-  } catch (error) {
-    return NextResponse.json({ error: 'Error' }, { status: 500 });
+    const docs = await ArsipModel.find().sort({ tanggal_upload: -1 }).lean();
+    const data = docs.map((d) => {
+      const obj = { ...d } as Record<string, unknown>;
+      obj.id = (obj._id as { toString(): string })?.toString();
+      delete obj._id; delete obj.__v;
+      return obj;
+    });
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error('[API/arsip GET]', err);
+    return NextResponse.json({ error: 'Gagal mengambil data arsip' }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     await dbConnect();
-    const body = await request.json();
-    const newItem = new Arsip({
-      ...body,
-      tanggal_upload: new Date().toISOString().split('T')[0]
-    });
-    const saved = await newItem.save();
-    return NextResponse.json({ id: saved._id, ...saved.toObject() }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: 'Error' }, { status: 500 });
+    const body = await req.json();
+    const doc = await ArsipModel.create(body);
+    const obj = doc.toObject() as Record<string, unknown>;
+    return NextResponse.json({ ...obj, id: (obj._id as { toString(): string })?.toString(), _id: undefined, __v: undefined }, { status: 201 });
+  } catch (err) {
+    console.error('[API/arsip POST]', err);
+    return NextResponse.json({ error: 'Gagal menyimpan data arsip' }, { status: 500 });
+  }
+}
+
+// DELETE /api/arsip?id=xyz
+export async function DELETE(req: NextRequest) {
+  try {
+    await dbConnect();
+    const id = req.nextUrl.searchParams.get('id');
+    if (!id) return NextResponse.json({ error: 'ID tidak diberikan' }, { status: 400 });
+    const doc = await ArsipModel.findByIdAndDelete(id);
+    if (!doc) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('[API/arsip DELETE]', err);
+    return NextResponse.json({ error: 'Gagal menghapus data' }, { status: 500 });
   }
 }

@@ -1,0 +1,56 @@
+--- lib/store.ts
++++ lib/store.ts
+@@ -33,9 +33,10 @@
+ 
+ // ─── Main Store Hook ──────────────────────────────────────────────────────────
+ export function useSimStore() {
+-  const isLive = DATA_MODE === 'live';
++  const [dataMode, setDataModeState] = useState<'dev' | 'live'>(DATA_MODE);
++  const isLive = dataMode === 'live';
+ 
+   const [isLoaded,        setIsLoaded]        = useState(false);
+   const [isLoading,       setIsLoading]        = useState(false);
+   const [error,           setError]            = useState<string | null>(null);
+@@ -47,10 +48,22 @@
+   const [suratList,       setSuratList]        = useState<Surat[]>([]);
+   const [arsipList,       setArsipList]        = useState<Arsip[]>([]);
+   const [selectedRt,      setSelectedRt]       = useState<string>('002');
+ 
++  // Load saved mode from localStorage on mount
++  useEffect(() => {
++    const savedMode = localStorage.getItem('sim_rw_data_mode') as 'dev' | 'live' | null;
++    if (savedMode && savedMode !== dataMode) {
++      setDataModeState(savedMode);
++    }
++  }, []); // Only run once on mount to get the initial mode
++
++  const setDataMode = (mode: 'dev' | 'live') => {
++    localStorage.setItem('sim_rw_data_mode', mode);
++    setDataModeState(mode);
++  };
++
+   // ─── Inisialisasi: DEV = localStorage, LIVE = API fetch ─────────────────────
+   useEffect(() => {
++    setIsLoaded(false);
+     if (!isLive) {
+       // DEV MODE: load dari localStorage, fallback ke dummy data
+       try {
+@@ -107,7 +120,7 @@
+           setIsLoading(false);
+         });
+     }
+-  // eslint-disable-next-line react-hooks/exhaustive-deps
+-  }, []);
++  }, [isLive]);
+ 
+   // ─── Helper simpan ke localStorage (DEV only) ─────────────────────────────
+@@ -298,7 +311,8 @@
+     isLoaded,
+     isLoading,
+     error,
+-    dataMode: DATA_MODE,
++    dataMode,
++    setDataMode,
+     // Data
+     wargaList,
+     kasList,

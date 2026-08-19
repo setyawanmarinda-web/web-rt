@@ -1,69 +1,60 @@
+// app/api/warga/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
-import { Warga } from '@/lib/mongoose';
+import { WargaModel } from '@/lib/mongoose';
 
-export async function GET(request: NextRequest) {
+// Helper: convert Mongoose doc ke plain object dengan id string
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toPlain(doc: any) {
+  const obj = doc.toObject ? doc.toObject() : doc;
+  return { ...obj, id: obj._id?.toString(), _id: undefined, __v: undefined };
+}
+
+// GET /api/warga?rt=002   (tanpa rt = semua)
+export async function GET(req: NextRequest) {
   try {
     await dbConnect();
-    
-    const { searchParams } = new URL(request.url);
-    const rt = searchParams.get('rt');
-
-    let query = {};
-    if (rt && rt !== 'ALL') {
-      query = { rt };
-    }
-
-    const wargaList = await Warga.find(query).sort({ created_at: -1 });
-    
-    return NextResponse.json(wargaList);
-  } catch (error) {
-    console.error('GET /api/warga error:', error);
-    return NextResponse.json(
-      { error: 'Gagal mengambil data warga' },
-      { status: 500 }
-    );
+    const rt = req.nextUrl.searchParams.get('rt');
+    const query = rt && rt !== 'ALL' ? { rt } : {};
+    const docs = await WargaModel.find(query).sort({ created_at: -1 }).lean();
+    const data = docs.map((d) => {
+      const obj = { ...d } as Record<string, unknown>;
+      obj.id = (obj._id as { toString(): string })?.toString();
+      delete obj._id;
+      delete obj.__v;
+      return obj;
+    });
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error('[API/warga GET]', err);
+    return NextResponse.json({ error: 'Gagal mengambil data warga' }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+// POST /api/warga
+export async function POST(req: NextRequest) {
   try {
     await dbConnect();
+    const body = await req.json();
+    const doc = await WargaModel.create(body);
+    return NextResponse.json(toPlain(doc), { status: 201 });
+  } catch (err) {
+    console.error('[API/warga POST]', err);
+    return NextResponse.json({ error: 'Gagal menyimpan data warga' }, { status: 500 });
+  }
+}
 
-    const body = await request.json();
-
-    // Validasi
-    if (!body.nama_lengkap || !body.alamat) {
-      return NextResponse.json(
-        { error: 'Nama lengkap dan alamat wajib diisi' },
-        { status: 400 }
-      );
-    }
-
-    const newWarga = new Warga({
-      nama_lengkap: body.nama_lengkap,
-      tanggal_lahir: body.tanggal_lahir || '',
-      status_tinggal: body.status_tinggal || 'Tetap',
-      rt: body.rt || '002',
-      rw: body.rw || '012',
-      no_hp: body.no_hp || '',
-      alamat: body.alamat,
-    });
-
-    const saved = await newWarga.save();
-
-    return NextResponse.json(
-      {
-        id: saved._id,
-        ...saved.toObject()
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error('POST /api/warga error:', error);
-    return NextResponse.json(
-      { error: 'Gagal menyimpan data warga' },
-      { status: 500 }
-    );
+// DELETE /api/warga?id=xyz
+export async function DELETE(req: NextRequest) {
+  try {
+    await dbConnect();
+    const id = req.nextUrl.searchParams.get('id');
+    if (!id) return NextResponse.json({ error: 'ID tidak diberikan' }, { status: 400 });
+    const doc = await WargaModel.findByIdAndDelete(id);
+    if (!doc) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('[API/warga DELETE]', err);
+    return NextResponse.json({ error: 'Gagal menghapus data' }, { status: 500 });
   }
 }
