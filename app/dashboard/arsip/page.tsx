@@ -2,10 +2,16 @@
 
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
-import { FolderArchive, Download, FileText, Upload } from 'lucide-react';
+import { FolderArchive, Download, FileText, Upload, Trash2 } from 'lucide-react';
 
 export default function ArsipPage() {
-  const { arsipList, addArsip } = useSimStore();
+  const { arsipList, addArsip, deleteData } = useSimStore();
+
+  const handleDelete = async (id: string, judul: string) => {
+    if (window.confirm(`Yakin ingin menghapus arsip "${judul}"?`)) {
+      try { await deleteData('arsip', id); } catch { alert('Gagal menghapus.'); }
+    }
+  };
 
   const [judul, setJudul] = useState('');
   const [kategori, setKategori] = useState<'Notulen Rapat' | 'SK Kepengurusan' | 'Peraturan RW' | 'Laporan Keuangan'>('Notulen Rapat');
@@ -57,14 +63,19 @@ export default function ArsipPage() {
                 </div>
               </div>
 
-              <a
-                href="#"
-                onClick={(e) => { e.preventDefault(); alert(`Mengunduh berkas "${item.judul}"...`); }}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-medium text-xs rounded-lg border border-slate-700 flex items-center gap-1.5 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Unduh PDF</span>
-              </a>
+              <div className="flex items-center gap-2">
+                <a
+                  href="#"
+                  onClick={(e) => { e.preventDefault(); alert(`Mengunduh berkas "${item.judul}"...`); }}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 font-medium text-xs rounded-lg border border-slate-700 flex items-center gap-1.5 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Unduh PDF</span>
+                </a>
+                <button onClick={() => handleDelete(item.id, item.judul)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Arsip">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>

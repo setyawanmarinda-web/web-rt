@@ -2,10 +2,16 @@
 
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
-import { FileText, Clock, CheckCircle2, AlertCircle, Plus, Calendar } from 'lucide-react';
+import { FileText, Clock, CheckCircle2, AlertCircle, Plus, Calendar, Trash2 } from 'lucide-react';
 
 export default function SuratPage() {
-  const { suratList, selectedRt, addSurat, updateSuratStatus } = useSimStore();
+  const { suratList, selectedRt, addSurat, updateSuratStatus, deleteData } = useSimStore();
+
+  const handleDelete = async (id: string, nama: string) => {
+    if (window.confirm(`Yakin ingin menghapus surat "${nama}"?`)) {
+      try { await deleteData('surat', id); } catch { alert('Gagal menghapus.'); }
+    }
+  };
 
   const [namaPemohon, setNamaPemohon] = useState('');
   const [tanggalLahir, setTanggalLahir] = useState('');
@@ -79,6 +85,9 @@ export default function SuratPage() {
                       Setujui Surat
                     </button>
                   )}
+                  <button onClick={() => handleDelete(item.id, item.nama_pemohon)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Surat">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ))}

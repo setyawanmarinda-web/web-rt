@@ -643,11 +643,16 @@ export default function KasDashboardPage() {
                 </span>
               </div>
 
-              {item.diskon_keringanan && (
-                <span className="inline-block text-[9px] bg-amber-500/20 text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-500/30">
+              <div className="flex items-center justify-between mt-1">
+                {item.diskon_keringanan && (
+                  <span className="inline-block text-[9px] bg-amber-500/20 text-amber-300 font-semibold px-2 py-0.5 rounded border border-amber-500/30">
                   Keringanan Lansia/Janda
-                </span>
-              )}
+                  </span>
+                )}
+                <button onClick={() => handleDelete(item.id, item.keterangan)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors flex-shrink-0" title="Hapus">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -662,6 +667,7 @@ export default function KasDashboardPage() {
                 <th className="px-4 py-3">Keterangan & Detail Skenario</th>
                 <th className="px-4 py-3">Kanal</th>
                 <th className="px-4 py-3 text-right">Nominal</th>
+                <th className="px-4 py-3 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/80">
@@ -716,6 +722,11 @@ export default function KasDashboardPage() {
                     item.jenis === 'Masuk' ? 'text-emerald-400' : 'text-red-400'
                   }`}>
                     {item.jenis === 'Masuk' ? '+' : '-'} Rp {Number(item.jumlah).toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <button onClick={() => handleDelete(item.id, item.keterangan)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Transaksi">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </td>
                 </tr>
               ))}

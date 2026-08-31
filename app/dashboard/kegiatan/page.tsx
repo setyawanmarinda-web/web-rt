@@ -2,10 +2,16 @@
 
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
-import { Calendar, Plus, MapPin, Clock, CheckCircle2 } from 'lucide-react';
+import { Calendar, Plus, MapPin, Clock, CheckCircle2, Trash2 } from 'lucide-react';
 
 export default function KegiatanPage() {
-  const { kegiatanList, selectedRt, addKegiatan } = useSimStore();
+  const { kegiatanList, selectedRt, addKegiatan, deleteData } = useSimStore();
+
+  const handleDelete = async (id: string, judul: string) => {
+    if (window.confirm(`Yakin ingin menghapus kegiatan "${judul}"?`)) {
+      try { await deleteData('kegiatan', id); } catch { alert('Gagal menghapus.'); }
+    }
+  };
 
   const [judul, setJudul] = useState('');
   const [deskripsi, setDeskripsi] = useState('');
@@ -63,9 +69,14 @@ export default function KegiatanPage() {
               </div>
               <h3 className="text-lg font-bold text-white mb-2">{item.judul}</h3>
               <p className="text-slate-300 text-sm leading-relaxed mb-4">{item.deskripsi}</p>
-              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 border-t border-slate-800 pt-3">
-                <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-emerald-400" /> {item.waktu}</span>
-                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-emerald-400" /> {item.lokasi}</span>
+              <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-400 border-t border-slate-800 pt-3">
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-emerald-400" /> {item.waktu}</span>
+                  <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-emerald-400" /> {item.lokasi}</span>
+                </div>
+                <button onClick={() => handleDelete(item.id, item.judul)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Kegiatan">
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
           ))}

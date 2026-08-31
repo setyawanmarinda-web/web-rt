@@ -2,10 +2,16 @@
 
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
-import { ShoppingBag, MessageCircle, Store, Plus } from 'lucide-react';
+import { ShoppingBag, MessageCircle, Store, Plus, Trash2 } from 'lucide-react';
 
 export default function UmkmPage() {
-  const { umkmList, addUmkm } = useSimStore();
+  const { umkmList, addUmkm, deleteData } = useSimStore();
+
+  const handleDelete = async (id: string, nama: string) => {
+    if (window.confirm(`Yakin ingin menghapus UMKM "${nama}"?`)) {
+      try { await deleteData('umkm', id); } catch { alert('Gagal menghapus.'); }
+    }
+  };
 
   const [namaUsaha, setNamaUsaha] = useState('');
   const [pemilik, setPemilik] = useState('');
@@ -68,6 +74,9 @@ export default function UmkmPage() {
                 <MessageCircle className="w-4 h-4" />
                 <span>Hubungi via WhatsApp ({u.whatsapp})</span>
               </a>
+              <button onClick={() => handleDelete(u.id, u.nama_usaha)} className="mt-2 w-full py-2 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white font-semibold border border-rose-500/20 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+                <Trash2 className="w-3.5 h-3.5" /> Hapus UMKM
+              </button>
             </div>
           ))}
         </div>

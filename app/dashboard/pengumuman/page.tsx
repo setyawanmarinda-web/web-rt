@@ -2,10 +2,16 @@
 
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
-import { Megaphone, Plus, BellRing } from 'lucide-react';
+import { Megaphone, Plus, BellRing, Trash2 } from 'lucide-react';
 
 export default function PengumumanPage() {
-  const { pengumumanList, selectedRt, addPengumuman } = useSimStore();
+  const { pengumumanList, selectedRt, addPengumuman, deleteData } = useSimStore();
+
+  const handleDelete = async (id: string, judul: string) => {
+    if (window.confirm(`Yakin ingin menghapus pengumuman "${judul}"?`)) {
+      try { await deleteData('pengumuman', id); } catch { alert('Gagal menghapus.'); }
+    }
+  };
 
   const [judul, setJudul] = useState('');
   const [isi, setIsi] = useState('');
@@ -58,7 +64,12 @@ export default function PengumumanPage() {
                 <span className="text-xs text-slate-400 font-mono">{item.tanggal}</span>
               </div>
               <h3 className="text-lg font-bold text-white mb-2">{item.judul}</h3>
-              <p className="text-slate-300 text-sm leading-relaxed">{item.isi}</p>
+              <p className="text-slate-300 text-sm leading-relaxed mb-3">{item.isi}</p>
+              <div className="flex justify-end">
+                <button onClick={() => handleDelete(item.id, item.judul)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Pengumuman">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
