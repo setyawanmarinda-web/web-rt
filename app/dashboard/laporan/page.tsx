@@ -20,9 +20,9 @@ export default function LaporanPage() {
         csvContent += `"${k.id}","${k.created_at}","${k.jenis}","${k.pos}","${k.jumlah}","${k.metode}","${k.nama_pembayar || ''}","${k.keterangan.replace(/"/g, '""')}"\n`;
       });
     } else {
-      csvContent += 'ID,NIK,Nama Lengkap,Status Tinggal,RT,RW,No HP\n';
+      csvContent += 'ID,Nama Lengkap,Status Tinggal,RT,RW,No HP\n';
       filteredWarga.forEach(w => {
-        csvContent += `"${w.id}","${w.nik}","${w.nama_lengkap}","${w.status_tinggal}","${w.rt}","${w.rw}","${w.no_hp || ''}"\n`;
+        csvContent += `"${w.id}","${w.nama_lengkap}","${w.status_tinggal}","${w.rt}","${w.rw}","${w.no_hp || ''}"\n`;
       });
     }
 
