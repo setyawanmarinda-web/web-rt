@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
+import DatePickerField from '@/components/DatePickerField';
 import { Calendar, Plus, MapPin, Clock, CheckCircle2, Trash2 } from 'lucide-react';
 
 export default function KegiatanPage() {
@@ -112,16 +113,13 @@ export default function KegiatanPage() {
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Tanggal *</label>
-              <input
-                type="date"
-                value={tanggal}
-                onChange={(e) => setTanggal(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-                required
-              />
-            </div>
+            <DatePickerField
+              label="Tanggal"
+              value={tanggal}
+              onChange={setTanggal}
+              required
+              colorTheme="emerald"
+            />
 
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Waktu</label>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Wallet, Users, Calendar, Megaphone, ShoppingBag,
-  BarChart3, FolderArchive, FileText, FileSpreadsheet, Settings,
+  BarChart3, FolderArchive, FileText, FileSpreadsheet, Settings, Package,
   Shield, X
 } from 'lucide-react';
 import { RT_LIST } from '@/lib/types';
@@ -28,6 +28,7 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
     { href: '/dashboard/surat', label: 'Layanan Surat', icon: FileText },
     { href: '/dashboard/arsip', label: 'Arsip Digital', icon: FolderArchive },
     { href: '/dashboard/laporan', label: 'Rekap & Export', icon: FileSpreadsheet },
+    { href: '/dashboard/inventory', label: 'Inventory', icon: Package },
     { href: '/dashboard/pengaturan', label: 'Pengaturan System', icon: Settings },
   ];
 
@@ -78,7 +79,7 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
           >
             {RT_LIST.map((rt) => (
               <option key={rt} value={rt}>
-                RT {rt} {rt === '002' ? '(Default Focus)' : ''}
+                RT {rt}
               </option>
             ))}
             <option value="ALL">Gabungan Semua RT (Admin RW)</option>
