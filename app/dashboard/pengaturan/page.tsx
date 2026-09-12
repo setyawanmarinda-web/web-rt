@@ -70,7 +70,7 @@ export default function PengaturanPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Alokasi Wajib Satpam & Sampah (Rp)</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Alokasi Wajib Sampah & Keamanan (Rp)</label>
                 <input
                   type="number"
                   value={standardSatpam}

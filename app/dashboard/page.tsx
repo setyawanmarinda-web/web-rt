@@ -25,7 +25,7 @@ export default function DashboardOverviewPage() {
             Ringkasan Administrasi & Financial Panel RT
           </h1>
           <p className="text-slate-300 text-sm md:text-base leading-relaxed mb-6">
-            Pantau arus kas 5 pos keuangan secara transparan, pendataan warga, serta agenda kerja bakti & posyandu lingkungan.
+            Pantau arus kas 3 pos keuangan secara transparan, pendataan warga, serta agenda kerja bakti & posyandu lingkungan.
           </p>
           
           <div className="flex flex-wrap items-center gap-3">
@@ -58,7 +58,7 @@ export default function DashboardOverviewPage() {
           <div className="text-2xl font-black text-emerald-400 mb-1">
             Rp {summary.saldoAkhir.toLocaleString('id-ID')}
           </div>
-          <p className="text-xs text-slate-400">Total Akumulasi 5 Pos Keuangan</p>
+          <p className="text-xs text-slate-400">Total Akumulasi 3 Pos Keuangan</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
@@ -85,11 +85,11 @@ export default function DashboardOverviewPage() {
 
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-400 uppercase">Pos Satpam & Sampah</span>
+            <span className="text-xs font-semibold text-slate-400 uppercase">Pos Sampah & Keamanan</span>
             <ShieldCheck className="w-4 h-4 text-red-400" />
           </div>
           <div className="text-2xl font-black text-white mb-1">
-            Rp {(summary['Satpam & Sampah'] || 0).toLocaleString('id-ID')}
+            Rp {(summary['Sampah & Keamanan'] || 0).toLocaleString('id-ID')}
           </div>
           <p className="text-xs text-slate-400">Terhitung dari Iuran Wajib</p>
         </div>

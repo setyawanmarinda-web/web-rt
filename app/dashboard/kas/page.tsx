@@ -78,9 +78,9 @@ export default function KasDashboardPage() {
 
   const applyPresetDiskonJandaLansia = () => {
     setAmount(28000);
-    setSelectedPos('Satpam & Sampah');
+    setSelectedPos('Sampah & Keamanan');
     setDiskonKeringanan(true);
-    setCatatanText('Keringanan iuran Lansia/Janda kurang mampu (Pos Satpam & Sampah)');
+    setCatatanText('Keringanan iuran Lansia/Janda kurang mampu (Pos Sampah & Keamanan)');
   };
 
   // Submit Transaction
@@ -177,7 +177,7 @@ export default function KasDashboardPage() {
             </span>
           </div>
           <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-            Pencatatan iuran terpisah 5 pos (Kas RT, Dansos, Satpam & Sampah, 17an, THR) & multi-titipan via tetangga.
+            Pencatatan iuran terpisah 3 pos (Kas RT, Sampah & Keamanan, Dana Sosial) & multi-titipan via tetangga.
           </p>
         </div>
 
@@ -198,66 +198,10 @@ export default function KasDashboardPage() {
           <span>Rincian Saldo Akumulasi per Pos (RT {selectedRt})</span>
         </h3>
 
-        <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-5 gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
-          <div className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">1. Satpam & Sampah</span>
-              <span className="text-[10px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded font-bold">Wajib</span>
-            </div>
-            <div className="text-base sm:text-lg font-bold text-white mb-1">
-              Rp {(summary['Satpam & Sampah'] || 0).toLocaleString('id-ID')}
-            </div>
-            <p className="text-[10px] sm:text-[11px] text-slate-500">Alokasi Utama Rp 28k/KK</p>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-amber-500" />
-          </div>
-
-          <div className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">2. Kas RT</span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold">Operasional</span>
-            </div>
-            <div className="text-base sm:text-lg font-bold text-emerald-400 mb-1">
-              Rp {(summary['Kas RT'] || 0).toLocaleString('id-ID')}
-            </div>
-            <p className="text-[10px] sm:text-[11px] text-slate-500">Operasional Internal</p>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500" />
-          </div>
-
-          <div className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">3. Dana Sosial</span>
-              <span className="text-[10px] bg-teal-500/20 text-teal-300 px-1.5 py-0.5 rounded font-bold">Dansos</span>
-            </div>
-            <div className="text-base sm:text-lg font-bold text-white mb-1">
-              Rp {(summary['Dana Sosial'] || 0).toLocaleString('id-ID')}
-            </div>
-            <p className="text-[10px] sm:text-[11px] text-slate-500">Sumbangan & Santunan</p>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-teal-500" />
-          </div>
-
-          <div className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">4. Dana 17an</span>
-              <span className="text-[10px] bg-sky-500/20 text-sky-300 px-1.5 py-0.5 rounded font-bold">HUT RI</span>
-            </div>
-            <div className="text-base sm:text-lg font-bold text-white mb-1">
-              Rp {(summary['17an'] || 0).toLocaleString('id-ID')}
-            </div>
-            <p className="text-[10px] sm:text-[11px] text-slate-500">Kegiatan & Lomba</p>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-sky-500" />
-          </div>
-
-          <div className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-400">5. Dana THR</span>
-              <span className="text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded font-bold">Tabungan</span>
-            </div>
-            <div className="text-base sm:text-lg font-bold text-white mb-1">
-              Rp {(summary['THR'] || 0).toLocaleString('id-ID')}
-            </div>
-            <p className="text-[10px] sm:text-[11px] text-slate-500">Petugas Kebersihan/Ronda</p>
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-500" />
-          </div>
+        <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
+          <div className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">1. Kas RT</span><span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold">Operasional</span></div><div className="text-base sm:text-lg font-bold text-emerald-400 mb-1">Rp {(summary["Kas RT"] || 0).toLocaleString("id-ID")}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Operasional Internal</p></div>
+          <div className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">2. Sampah & Keamanan</span><span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">Wajib</span></div><div className="text-base sm:text-lg font-bold text-white mb-1">Rp {(summary["Sampah & Keamanan"] || 0).toLocaleString("id-ID")}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Sampah, Keamanan & kegiatan RW</p></div>
+          <div className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">3. Dana Sosial</span><span className="text-[10px] bg-teal-500/20 text-teal-300 px-1.5 py-0.5 rounded font-bold">Dansos</span></div><div className="text-base sm:text-lg font-bold text-white mb-1">Rp {(summary["Dana Sosial"] || 0).toLocaleString("id-ID")}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Sumbangan & Santunan</p></div>
         </div>
       </div>
 
@@ -368,11 +312,9 @@ export default function KasDashboardPage() {
                   onChange={(e) => setSelectedPos(e.target.value as any)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
                 >
-                  <option value="Satpam & Sampah">Pos Satpam & Sampah (Wajib Rp 28k)</option>
+                  <option value="Sampah & Keamanan">Pos Sampah & Keamanan (Wajib Rp 28k)</option>
                   <option value="Kas RT">Pos Kas RT Internal</option>
                   <option value="Dana Sosial">Pos Dana Sosial (Dansos)</option>
-                  <option value="17an">Pos Dana 17-an (Agustus)</option>
-                  <option value="THR">Pos Dana THR Pekerja</option>
                 </select>
               </div>
 

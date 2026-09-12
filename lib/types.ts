@@ -15,7 +15,7 @@ export interface KasRT {
   keterangan: string;
   jumlah: number;
   jenis: 'Masuk' | 'Keluar';
-  pos: 'Kas RT' | 'Dana Sosial' | 'Satpam & Sampah' | '17an' | 'THR';
+  pos: 'Kas RT' | 'Sampah & Keamanan' | 'Dana Sosial';
   rt: string;
   metode: 'Cash' | 'Transfer' | 'Split' | 'Titipan';
   nama_pembayar?: string;

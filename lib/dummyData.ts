@@ -13,12 +13,12 @@ export const DUMMY_WARGA: Warga[] = [
 ];
 
 export const DUMMY_KAS: KasRT[] = [
-  { id: 'k-1', keterangan: '[Satpam & Sampah] Iuran Wajib Pak Budi', jumlah: 28000, jenis: 'Masuk', pos: 'Satpam & Sampah', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', tanggal_transaksi: '2026-08-01', created_at: '2026-08-01T10:00:00Z' },
+  { id: 'k-1', keterangan: '[Sampah & Keamanan] Iuran Wajib Pak Budi', jumlah: 28000, jenis: 'Masuk', pos: 'Sampah & Keamanan', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', tanggal_transaksi: '2026-08-01', created_at: '2026-08-01T10:00:00Z' },
   { id: 'k-2', keterangan: '[Kas RT] Alokasi Iuran RT Pak Budi', jumlah: 12000, jenis: 'Masuk', pos: 'Kas RT', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', tanggal_transaksi: '2026-08-01', created_at: '2026-08-01T10:00:00Z' },
   { id: 'k-3', keterangan: '[Dana Sosial] Alokasi Dansos Pak Budi', jumlah: 5000, jenis: 'Masuk', pos: 'Dana Sosial', rt: '002', metode: 'Transfer', nama_pembayar: 'Budi Santoso', tanggal_transaksi: '2026-08-01', created_at: '2026-08-01T10:00:00Z' },
-  { id: 'k-6', keterangan: '[Satpam & Sampah] Iuran Titip via Ibu Virna & Pak Joko', jumlah: 56000, jenis: 'Masuk', pos: 'Satpam & Sampah', rt: '002', metode: 'Titipan', nama_pembayar: 'Pak Hendra & Pak Supri', perantara_list: [{ nama: 'Ibu Virna', alamat: 'Blok A1 No 5' }, { nama: 'Pak Joko', alamat: 'Blok A1 No 6' }], tanggal_transaksi: '2026-08-03', created_at: '2026-08-03T11:20:00Z' },
+  { id: 'k-6', keterangan: '[Sampah & Keamanan] Iuran Titip via Ibu Virna & Pak Joko', jumlah: 56000, jenis: 'Masuk', pos: 'Sampah & Keamanan', rt: '002', metode: 'Titipan', nama_pembayar: 'Pak Hendra & Pak Supri', perantara_list: [{ nama: 'Ibu Virna', alamat: 'Blok A1 No 5' }, { nama: 'Pak Joko', alamat: 'Blok A1 No 6' }], tanggal_transaksi: '2026-08-03', created_at: '2026-08-03T11:20:00Z' },
   { id: 'k-7', keterangan: '[Kas RT] Split Payment Pak Anton (Cash Rp 25k + TF Rp 30k)', jumlah: 55000, jenis: 'Masuk', pos: 'Kas RT', rt: '002', metode: 'Split', nama_pembayar: 'Anton Wijaya', rincian_split: 'Cash Rp 25.000 + TF Rp 30.000', tanggal_transaksi: '2026-08-05', created_at: '2026-08-05T15:45:00Z' },
-  { id: 'k-8', keterangan: '[Satpam & Sampah] Keringanan Lansia Bu Siti Aminah', jumlah: 28000, jenis: 'Masuk', pos: 'Satpam & Sampah', rt: '002', metode: 'Cash', nama_pembayar: 'Siti Aminah', diskon_keringanan: true, tanggal_transaksi: '2026-08-06', created_at: '2026-08-06T09:10:00Z' },
+  { id: 'k-8', keterangan: '[Sampah & Keamanan] Keringanan Lansia Bu Siti Aminah', jumlah: 28000, jenis: 'Masuk', pos: 'Sampah & Keamanan', rt: '002', metode: 'Cash', nama_pembayar: 'Siti Aminah', diskon_keringanan: true, tanggal_transaksi: '2026-08-06', created_at: '2026-08-06T09:10:00Z' },
   { id: 'k-9', keterangan: '[Kas RT] Pembelian Lampu LED POS Ronda RT 002', jumlah: 150000, jenis: 'Keluar', pos: 'Kas RT', rt: '002', metode: 'Cash', tanggal_transaksi: '2026-08-08', created_at: '2026-08-08T19:30:00Z' },
 ];
 

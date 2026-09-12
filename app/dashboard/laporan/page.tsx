@@ -44,7 +44,7 @@ export default function LaporanPage() {
       <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white">Laporan & Ekspor Rekapitulasi Data</h1>
-          <p className="text-slate-400 text-sm">Cetak & unduh laporan rekapitulasi keuangan 5 pos & data kependudukan (Format PDF / Excel CSV)</p>
+          <p className="text-slate-400 text-sm">Cetak & unduh laporan rekapitulasi keuangan 3 pos & data kependudukan (Format PDF / Excel CSV)</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -96,26 +96,18 @@ export default function LaporanPage() {
 
         <div className="space-y-4">
           <h3 className="text-sm font-bold text-white uppercase tracking-wider">Rincian Pos Keuangan</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <span className="text-slate-400 block">1. Satpam & Sampah</span>
-              <span className="font-bold text-white">Rp {(summary['Satpam & Sampah'] || 0).toLocaleString('id-ID')}</span>
+              <span className="text-slate-400 block">1. Kas RT</span>
+              <span className="font-bold text-emerald-400">Rp {(summary["Kas RT"] || 0).toLocaleString("id-ID")}</span>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <span className="text-slate-400 block">2. Kas RT</span>
-              <span className="font-bold text-emerald-400">Rp {(summary['Kas RT'] || 0).toLocaleString('id-ID')}</span>
+              <span className="text-slate-400 block">2. Sampah & Keamanan</span>
+              <span className="font-bold text-white">Rp {(summary["Sampah & Keamanan"] || 0).toLocaleString("id-ID")}</span>
             </div>
             <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
               <span className="text-slate-400 block">3. Dana Sosial</span>
-              <span className="font-bold text-white">Rp {(summary['Dana Sosial'] || 0).toLocaleString('id-ID')}</span>
-            </div>
-            <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <span className="text-slate-400 block">4. Dana 17-an</span>
-              <span className="font-bold text-white">Rp {(summary['17an'] || 0).toLocaleString('id-ID')}</span>
-            </div>
-            <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg">
-              <span className="text-slate-400 block">5. Dana THR</span>
-              <span className="font-bold text-white">Rp {(summary['THR'] || 0).toLocaleString('id-ID')}</span>
+              <span className="font-bold text-white">Rp {(summary["Dana Sosial"] || 0).toLocaleString("id-ID")}</span>
             </div>
           </div>
         </div>

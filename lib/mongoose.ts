@@ -81,7 +81,7 @@ const KasRTSchema = new Schema({
 
   pos: {
     type: String,
-    enum: ['Kas RT', 'Dana Sosial', 'Satpam & Sampah', '17an', 'THR'],
+    enum: ['Kas RT', 'Sampah & Keamanan', 'Dana Sosial'],
     required: true,
   },
 
@@ -513,6 +513,143 @@ const InventoryLoanSchema = new Schema({
   },
 });
 
+// ─── Iuran Kewajiban ──────────────────────────────────────────────────────────
+
+const IuranKewajibanSchema = new Schema({
+  warga_id: {
+    type: String,
+    required: true,
+  },
+
+  rt: {
+    type: String,
+    required: true,
+  },
+
+  tahun: {
+    type: Number,
+    required: true,
+  },
+
+  bulan: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 12,
+  },
+
+  nominal_normal: {
+    type: Number,
+    required: true,
+    default: 55000,
+  },
+
+  nominal_wajib: {
+    type: Number,
+    required: true,
+  },
+
+  nominal_terbayar: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
+  status: {
+    type: String,
+    enum: ["Belum Bayar", "Sebagian", "Lunas"],
+    default: "Belum Bayar",
+  },
+
+  keringanan: {
+    type: Boolean,
+    default: false,
+  },
+
+  catatan_keringanan: {
+    type: String,
+  },
+
+  created_at: {
+    type: String,
+    default: () => new Date().toISOString(),
+  },
+});
+
+// ─── Pembayaran Iuran ─────────────────────────────────────────────────────────
+
+const PembayaranIuranSchema = new Schema({
+  warga_id: {
+    type: String,
+    required: true,
+  },
+
+  rt: {
+    type: String,
+    required: true,
+  },
+
+  tanggal_pembayaran: {
+    type: String,
+    required: true,
+  },
+
+  nominal: {
+    type: Number,
+    required: true,
+    min: 1,
+  },
+
+  metode: {
+    type: String,
+    enum: ["Cash", "Transfer", "Split", "Titipan"],
+    required: true,
+  },
+
+  alokasi: {
+    type: [
+      {
+        kewajiban_id: {
+          type: String,
+          required: true,
+        },
+        tahun: {
+          type: Number,
+          required: true,
+        },
+        bulan: {
+          type: Number,
+          required: true,
+        },
+        nominal: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+      },
+    ],
+    default: [],
+  },
+
+  keringanan: {
+    type: Boolean,
+    default: false,
+  },
+
+  catatan: {
+    type: String,
+  },
+
+  kas_id: {
+    type: String,
+  },
+
+  created_at: {
+    type: String,
+    default: () => new Date().toISOString(),
+  },
+});
+
 // ─── Exports (singleton-safe) ─────────────────────────────────────────────────
 
 export const WargaModel =
@@ -520,6 +657,12 @@ export const WargaModel =
 
 export const KasRTModel =
   models.KasRT || model('KasRT', KasRTSchema);
+
+export const IuranKewajibanModel =
+  models.IuranKewajiban || model('IuranKewajiban', IuranKewajibanSchema);
+
+export const PembayaranIuranModel =
+  models.PembayaranIuran || model('PembayaranIuran', PembayaranIuranSchema);
 
 export const KegiatanModel =
   models.Kegiatan || model('Kegiatan', KegiatanSchema);

@@ -38,7 +38,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-slate-300 text-sm sm:text-base md:text-lg leading-relaxed font-normal px-2">
-                Sistem Terpadu Layanan Warga, Pencatatan Iuran Bulanan 5 Pos Keuangan (Satpam/Sampah, Kas RT, Dansos, 17-an, THR), & Direktori UMKM Lokal.
+                Sistem Terpadu Layanan Warga, Pencatatan Iuran Bulanan 3 Pos Keuangan (Kas RT, Sampah & Keamanan, Dana Sosial), & Direktori UMKM Lokal.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
@@ -68,9 +68,9 @@ export default function HomePage() {
                 <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">
                   <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-white">Transparansi 5 Pos Keuangan</h3>
+                <h3 className="text-base sm:text-lg font-bold text-white">Transparansi 3 Pos Keuangan</h3>
                 <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-                  Pencatatan iuran terpisah per pos (Kas RT, Dansos, Satpam & Sampah, 17-an, THR) serta fleksibilitas pembayaran titipan & split cash/transfer.
+                  Pencatatan iuran terpisah per pos (Kas RT, Sampah & Keamanan, Dana Sosial) serta fleksibilitas pembayaran titipan & split cash/transfer.
                 </p>
               </div>
 

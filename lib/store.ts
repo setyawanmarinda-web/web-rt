@@ -4,10 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Warga, KasRT, Kegiatan, Pengumuman, UMKM, Surat, Arsip,
 } from './types';
-import {
-  DUMMY_WARGA, DUMMY_KAS, DUMMY_KEGIATAN, DUMMY_PENGUMUMAN,
-  DUMMY_UMKM, DUMMY_SURAT, DUMMY_ARSIP,
-} from './dummyData';
 import { DATA_MODE } from './dataMode';
 
 // ─── LocalStorage keys (hanya dipakai saat DEV mode) ─────────────────────────
@@ -65,29 +61,28 @@ export function useSimStore() {
   useEffect(() => {
     setIsLoaded(false);
     if (!isLive) {
-      // DEV MODE: load dari localStorage, fallback ke dummy data
+      // DEV MODE: load dari localStorage, fallback ke data kosong
       try {
         const s = (key: string, fallback: unknown[]) => {
           const raw = localStorage.getItem(key);
           return raw ? JSON.parse(raw) : fallback;
         };
-        setWargaList(s(STORAGE_KEYS.WARGA, DUMMY_WARGA));
-        setKasList(s(STORAGE_KEYS.KAS, DUMMY_KAS));
-        setKegiatanList(s(STORAGE_KEYS.KEGIATAN, DUMMY_KEGIATAN));
-        setPengumumanList(s(STORAGE_KEYS.PENGUMUMAN, DUMMY_PENGUMUMAN));
-        setUmkmList(s(STORAGE_KEYS.UMKM, DUMMY_UMKM));
-        setSuratList(s(STORAGE_KEYS.SURAT, DUMMY_SURAT));
-        setArsipList(s(STORAGE_KEYS.ARSIP, DUMMY_ARSIP));
+        setWargaList(s(STORAGE_KEYS.WARGA, []));
+        setKasList(s(STORAGE_KEYS.KAS, []));
+        setKegiatanList(s(STORAGE_KEYS.KEGIATAN, []));
+        setPengumumanList(s(STORAGE_KEYS.PENGUMUMAN, []));
+        setUmkmList(s(STORAGE_KEYS.UMKM, []));
+        setSuratList(s(STORAGE_KEYS.SURAT, []));
+        setArsipList(s(STORAGE_KEYS.ARSIP, []));
       } catch (e) {
         console.error('Gagal load localStorage:', e);
-        // Fallback absolut ke dummy
-        setWargaList(DUMMY_WARGA);
-        setKasList(DUMMY_KAS);
-        setKegiatanList(DUMMY_KEGIATAN);
-        setPengumumanList(DUMMY_PENGUMUMAN);
-        setUmkmList(DUMMY_UMKM);
-        setSuratList(DUMMY_SURAT);
-        setArsipList(DUMMY_ARSIP);
+        setWargaList([]);
+        setKasList([]);
+        setKegiatanList([]);
+        setPengumumanList([]);
+        setUmkmList([]);
+        setSuratList([]);
+        setArsipList([]);
       } finally {
         setIsLoaded(true);
       }
@@ -337,7 +332,7 @@ export function useSimStore() {
     const posBalance: Record<string, number> & {
       totalMasuk: number; totalKeluar: number; saldoAkhir: number;
     } = {
-      'Kas RT': 0, 'Dana Sosial': 0, 'Satpam & Sampah': 0, '17an': 0, 'THR': 0,
+      'Kas RT': 0, 'Sampah & Keamanan': 0, 'Dana Sosial': 0,
       totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0,
     };
 
