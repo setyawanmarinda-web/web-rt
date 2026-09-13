@@ -128,67 +128,8 @@ export default function StatistikPage() {
 
       <BirthdayNotifications wargaList={filteredWarga} />
 
-      {/* Grid Content: Table & Registration */}
+      {/* Grid Content: Registration & Table */}
       <div className="space-y-6 lg:space-y-8">
-        {/* Table Warga */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
-          <h2 className="text-base sm:text-lg font-bold text-white mb-4">Daftar Warga Terdaftar (RT {selectedRt})</h2>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-950 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
-                <tr>
-                  <th className="px-4 py-3">Alamat Rumah</th>
-                  <th className="px-4 py-3">NIK</th>
-                  <th className="px-4 py-3">Nama Lengkap</th>
-                  <th className="px-4 py-3">Tanggal Lahir</th>
-                  <th className="px-4 py-3">Usia</th>
-                  <th className="px-4 py-3">Kategori Usia</th>
-                  <th className="px-4 py-3">RT / RW</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800">
-                {sortedWarga.map((w) => (
-                  <tr key={w.id} className="hover:bg-slate-850">
-                    <td className="px-4 py-3 text-xs text-slate-300 whitespace-nowrap">{w.alamat || '-'}</td>
-                    <td className="px-4 py-3 text-xs font-mono text-slate-400 whitespace-nowrap">{w.nik || '-'}</td>
-                    <td className="px-4 py-3 font-bold text-white whitespace-nowrap">{w.nama_lengkap}</td>
-                    <td className="px-4 py-3 text-xs font-mono text-slate-400 whitespace-nowrap">{w.tanggal_lahir || '-'}</td>
-                    <td className="px-4 py-3 text-xs text-slate-300 whitespace-nowrap">{getAge(w.tanggal_lahir) ?? '-'}{getAge(w.tanggal_lahir) !== null ? ' tahun' : ''}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {getWargaAgeCategory(w) ? (
-                        <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/30">{getWargaAgeCategory(w)}</span>
-                      ) : '-'}
-                    </td>
-                    <td className="px-4 py-3 text-xs whitespace-nowrap font-bold text-emerald-400">RT {w.rt} / RW {w.rw}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`px-2.5 py-0.5 rounded text-xs font-semibold ${
-                        w.status_tinggal === 'Tetap'
-                          ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
-                          : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                      }`}>
-                        {w.status_tinggal}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <button onClick={() => startEdit(w)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit Warga"><Pencil className="w-4 h-4" /></button>
-                      <button 
-                        onClick={() => handleDelete(w.id, w.nama_lengkap)}
-                        className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors"
-                        title="Hapus Warga"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
         {/* Input Form Warga */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
           <div className="flex items-center gap-3 mb-5 pb-4 border-b border-slate-800">
@@ -282,6 +223,64 @@ export default function StatistikPage() {
           </form>
         </div>
 
+        {/* Table Warga */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+          <h2 className="text-base sm:text-lg font-bold text-white mb-4">Daftar Warga Terdaftar (RT {selectedRt})</h2>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-950 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
+                <tr>
+                  <th className="px-4 py-3">Alamat</th>
+                  <th className="px-4 py-3">Nama Lengkap</th>
+                  <th className="px-4 py-3">Usia</th>
+                  <th className="px-4 py-3">Kategori usia</th>
+                  <th className="px-4 py-3">NIK</th>
+                  <th className="px-4 py-3">Tanggal Lahir</th>
+                  <th className="px-4 py-3">RT/RW</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {sortedWarga.map((w) => (
+                  <tr key={w.id} className="hover:bg-slate-850">
+                    <td className="px-4 py-3 text-xs text-slate-300 whitespace-nowrap">{w.alamat || '-'}</td>
+                    <td className="px-4 py-3 font-bold text-white whitespace-nowrap">{w.nama_lengkap}</td>
+                    <td className="px-4 py-3 text-xs text-slate-300 whitespace-nowrap">{getAge(w.tanggal_lahir) ?? '-'}{getAge(w.tanggal_lahir) !== null ? ' tahun' : ''}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {getWargaAgeCategory(w) ? (
+                        <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/30">{getWargaAgeCategory(w)}</span>
+                      ) : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-xs font-mono text-slate-400 whitespace-nowrap">{w.nik || '-'}</td>
+                    <td className="px-4 py-3 text-xs font-mono text-slate-400 whitespace-nowrap">{w.tanggal_lahir || '-'}</td>
+                    <td className="px-4 py-3 text-xs whitespace-nowrap font-bold text-emerald-400">RT {w.rt} / RW {w.rw}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`px-2.5 py-0.5 rounded text-xs font-semibold ${
+                        w.status_tinggal === 'Tetap'
+                          ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30'
+                          : 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                      }`}>
+                        {w.status_tinggal}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <button onClick={() => startEdit(w)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit Warga"><Pencil className="w-4 h-4" /></button>
+                      <button 
+                        onClick={() => handleDelete(w.id, w.nama_lengkap)}
+                        className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors"
+                        title="Hapus Warga"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
     </div>
