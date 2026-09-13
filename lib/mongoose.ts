@@ -9,6 +9,13 @@ import mongoose, { Schema, models, model } from 'mongoose';
 // ─── Warga ────────────────────────────────────────────────────────────────────
 
 const WargaSchema = new Schema({
+  nik: {
+    type: String,
+    required: true,
+    match: [/^\d{16}$/, 'NIK harus terdiri dari tepat 16 angka'],
+    trim: true,
+  },
+
   nama_lengkap: {
     type: String,
     required: true,

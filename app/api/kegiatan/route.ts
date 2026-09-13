@@ -35,6 +35,20 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    await dbConnect();
+    const { id, ...changes } = await req.json();
+    const doc = await KegiatanModel.findByIdAndUpdate(id, changes, { new: true });
+    if (!doc) return NextResponse.json({ error: 'Kegiatan tidak ditemukan' }, { status: 404 });
+    const obj = doc.toObject() as Record<string, unknown>;
+    return NextResponse.json({ ...obj, id: doc._id.toString(), _id: undefined, __v: undefined });
+  } catch (err) {
+    console.error('[API/kegiatan PATCH]', err);
+    return NextResponse.json({ error: 'Gagal mengubah kegiatan' }, { status: 500 });
+  }
+}
+
 // DELETE /api/kegiatan?id=xyz
 export async function DELETE(req: NextRequest) {
   try {

@@ -42,17 +42,17 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PATCH /api/surat  — update status
+// PATCH /api/surat
 export async function PATCH(req: NextRequest) {
   try {
     await dbConnect();
-    const { id, status } = await req.json();
-    const doc = await SuratModel.findByIdAndUpdate(id, { status }, { new: true });
+    const { id, ...changes } = await req.json();
+    const doc = await SuratModel.findByIdAndUpdate(id, changes, { new: true });
     if (!doc) return NextResponse.json({ error: 'Surat tidak ditemukan' }, { status: 404 });
     return NextResponse.json(toPlain(doc.toObject() as Record<string, unknown>));
   } catch (err) {
     console.error('[API/surat PATCH]', err);
-    return NextResponse.json({ error: 'Gagal update status surat' }, { status: 500 });
+    return NextResponse.json({ error: 'Gagal mengubah data surat' }, { status: 500 });
   }
 }
 

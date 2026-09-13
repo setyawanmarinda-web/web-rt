@@ -3,15 +3,21 @@
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
 import DatePickerField from '@/components/DatePickerField';
-import { Calendar, Plus, MapPin, Clock, CheckCircle2, Trash2 } from 'lucide-react';
+import { Calendar, Plus, MapPin, Clock, CheckCircle2, Trash2, Pencil, X } from 'lucide-react';
 
 export default function KegiatanPage() {
-  const { kegiatanList, selectedRt, addKegiatan, deleteData } = useSimStore();
+  const { kegiatanList, selectedRt, addKegiatan, updateData, deleteData } = useSimStore();
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, judul: string) => {
     if (window.confirm(`Yakin ingin menghapus kegiatan "${judul}"?`)) {
       try { await deleteData('kegiatan', id); } catch { alert('Gagal menghapus.'); }
     }
+  };
+
+  const startEdit = (item: (typeof kegiatanList)[number]) => {
+    setEditingId(item.id); setJudul(item.judul); setDeskripsi(item.deskripsi); setTanggal(item.tanggal);
+    setWaktu(item.waktu); setLokasi(item.lokasi); setKategori(item.kategori);
   };
 
   const [judul, setJudul] = useState('');
@@ -23,11 +29,11 @@ export default function KegiatanPage() {
 
   const filteredKegiatan = selectedRt === 'ALL' ? kegiatanList : kegiatanList.filter(k => k.rt === selectedRt || k.rt === '012');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!judul || !tanggal) return alert('Judul dan tanggal wajib diisi');
 
-    addKegiatan({
+    const data = {
       judul,
       deskripsi,
       tanggal,
@@ -36,14 +42,17 @@ export default function KegiatanPage() {
       rt: selectedRt === 'ALL' ? '002' : selectedRt,
       kategori,
       status: 'Akan Datang'
-    });
+    } as const;
+    if (editingId) await updateData('kegiatan', editingId, data);
+    else await addKegiatan(data);
 
     setJudul('');
     setDeskripsi('');
     setTanggal('');
     setWaktu('');
     setLokasi('');
-    alert('Agenda kegiatan berhasil ditambahkan!');
+    setEditingId(null);
+    alert(editingId ? 'Agenda kegiatan berhasil diubah!' : 'Agenda kegiatan berhasil ditambahkan!');
   };
 
   return (
@@ -75,9 +84,10 @@ export default function KegiatanPage() {
                   <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-emerald-400" /> {item.waktu}</span>
                   <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-emerald-400" /> {item.lokasi}</span>
                 </div>
-                <button onClick={() => handleDelete(item.id, item.judul)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Kegiatan">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => startEdit(item)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit Kegiatan"><Pencil className="w-4 h-4" /></button>
+                  <button onClick={() => handleDelete(item.id, item.judul)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Kegiatan"><Trash2 className="w-4 h-4" /></button>
+                </div>
               </div>
             </div>
           ))}
@@ -85,7 +95,7 @@ export default function KegiatanPage() {
 
         {/* Form Tambah Kegiatan (4 cols) */}
         <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
-          <h2 className="text-lg font-bold text-white mb-4">Buat Agenda Baru</h2>
+          <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-bold text-white">{editingId ? 'Edit Agenda' : 'Buat Agenda Baru'}</h2>{editingId && <button type="button" onClick={() => { setEditingId(null); setJudul(''); setDeskripsi(''); setTanggal(''); setWaktu(''); setLokasi(''); }} className="text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}</div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Judul Kegiatan *</label>
@@ -158,7 +168,7 @@ export default function KegiatanPage() {
               type="submit"
               className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
             >
-              + Publish Agenda
+              {editingId ? 'Simpan Perubahan' : '+ Publish Agenda'}
             </button>
           </form>
         </div>

@@ -1,6 +1,7 @@
 export interface Warga {
   id: string;
   nama_lengkap: string;
+  nik?: string;
   tanggal_lahir?: string;
   status_tinggal: 'Tetap' | 'Kontrak';
   rt: string;

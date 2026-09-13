@@ -4,6 +4,7 @@ import React from 'react';
 import { useSimStore } from '@/lib/store';
 import Link from 'next/link';
 import { Wallet, Users, Calendar, Megaphone, FileText, ArrowRight, ShieldCheck, TrendingUp } from 'lucide-react';
+import BirthdayNotifications from '@/components/BirthdayNotifications';
 
 export default function DashboardOverviewPage() {
   const { selectedRt, wargaList, kasList, kegiatanList, pengumumanList, getKasSummaryByRt } = useSimStore();
@@ -95,6 +96,8 @@ export default function DashboardOverviewPage() {
         </div>
 
       </div>
+
+      <BirthdayNotifications wargaList={filteredWarga} />
 
       {/* Quick Action Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

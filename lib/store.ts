@@ -8,14 +8,24 @@ import { DATA_MODE } from './dataMode';
 
 // ─── LocalStorage keys (hanya dipakai saat DEV mode) ─────────────────────────
 const STORAGE_KEYS = {
-  WARGA:      'sim_rw_warga_v1',
-  KAS:        'sim_rw_kas_v1',
-  KEGIATAN:   'sim_rw_kegiatan_v1',
-  PENGUMUMAN: 'sim_rw_pengumuman_v1',
-  UMKM:       'sim_rw_umkm_v1',
-  SURAT:      'sim_rw_surat_v1',
-  ARSIP:      'sim_rw_arsip_v1',
+  WARGA:      'sim_rw_warga_v2',
+  KAS:        'sim_rw_kas_v2',
+  KEGIATAN:   'sim_rw_kegiatan_v2',
+  PENGUMUMAN: 'sim_rw_pengumuman_v2',
+  UMKM:       'sim_rw_umkm_v2',
+  SURAT:      'sim_rw_surat_v2',
+  ARSIP:      'sim_rw_arsip_v2',
 };
+
+const LEGACY_STORAGE_KEYS = [
+  'sim_rw_warga_v1',
+  'sim_rw_kas_v1',
+  'sim_rw_kegiatan_v1',
+  'sim_rw_pengumuman_v1',
+  'sim_rw_umkm_v1',
+  'sim_rw_surat_v1',
+  'sim_rw_arsip_v1',
+];
 
 // ─── Generic API helper ────────────────────────────────────────────────────────
 async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
@@ -63,6 +73,7 @@ export function useSimStore() {
     if (!isLive) {
       // DEV MODE: load dari localStorage, fallback ke data kosong
       try {
+        LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
         const s = (key: string, fallback: unknown[]) => {
           const raw = localStorage.getItem(key);
           return raw ? JSON.parse(raw) : fallback;
@@ -278,6 +289,47 @@ export function useSimStore() {
     }
   };
 
+  const updateData = async (
+    module: 'warga'|'kas'|'kegiatan'|'pengumuman'|'umkm'|'surat'|'arsip',
+    id: string,
+    changes: Record<string, unknown>,
+  ) => {
+    if (isLive) {
+      const updated = await apiFetch<Record<string, unknown>>(`/api/${module}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ id, ...changes }),
+      });
+      const replace = <T extends { id: string }>(list: T[], setList: (value: T[]) => void) => {
+        setList(list.map((item) => item.id === id ? { ...item, ...updated, id } : item));
+      };
+      switch (module) {
+        case 'warga': replace(wargaList, setWargaList); break;
+        case 'kas': replace(kasList, setKasList); break;
+        case 'kegiatan': replace(kegiatanList, setKegiatanList); break;
+        case 'pengumuman': replace(pengumumanList, setPengumumanList); break;
+        case 'umkm': replace(umkmList, setUmkmList); break;
+        case 'surat': replace(suratList, setSuratList); break;
+        case 'arsip': replace(arsipList, setArsipList); break;
+      }
+      return;
+    }
+
+    const replaceLocal = <T extends { id: string }>(list: T[], setList: (value: T[]) => void, key: string) => {
+      const updated = list.map((item) => item.id === id ? { ...item, ...changes } as T : item);
+      setList(updated);
+      saveLocal(key, updated);
+    };
+    switch (module) {
+      case 'warga': replaceLocal(wargaList, setWargaList, STORAGE_KEYS.WARGA); break;
+      case 'kas': replaceLocal(kasList, setKasList, STORAGE_KEYS.KAS); break;
+      case 'kegiatan': replaceLocal(kegiatanList, setKegiatanList, STORAGE_KEYS.KEGIATAN); break;
+      case 'pengumuman': replaceLocal(pengumumanList, setPengumumanList, STORAGE_KEYS.PENGUMUMAN); break;
+      case 'umkm': replaceLocal(umkmList, setUmkmList, STORAGE_KEYS.UMKM); break;
+      case 'surat': replaceLocal(suratList, setSuratList, STORAGE_KEYS.SURAT); break;
+      case 'arsip': replaceLocal(arsipList, setArsipList, STORAGE_KEYS.ARSIP); break;
+    }
+  };
+
 
   // ─── HAPUS DATA (GENERIC) ─────────────────────────────────────────────────
   const deleteData = async (module: 'warga'|'kas'|'kegiatan'|'pengumuman'|'umkm'|'surat'|'arsip', id: string) => {
@@ -377,6 +429,7 @@ export function useSimStore() {
     addUmkm,
     addSurat,
     updateSuratStatus,
+    updateData,
     deleteData,
     addArsip,
     // Refresh (live only)

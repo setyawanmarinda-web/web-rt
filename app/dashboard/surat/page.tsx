@@ -3,16 +3,19 @@
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
 import DatePickerField from '@/components/DatePickerField';
-import { FileText, Clock, CheckCircle2, AlertCircle, Plus, Calendar, Trash2 } from 'lucide-react';
+import { FileText, Clock, CheckCircle2, AlertCircle, Plus, Calendar, Trash2, Pencil, X } from 'lucide-react';
 
 export default function SuratPage() {
-  const { suratList, selectedRt, addSurat, updateSuratStatus, deleteData } = useSimStore();
+  const { suratList, selectedRt, addSurat, updateData, updateSuratStatus, deleteData } = useSimStore();
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, nama: string) => {
     if (window.confirm(`Yakin ingin menghapus surat "${nama}"?`)) {
       try { await deleteData('surat', id); } catch { alert('Gagal menghapus.'); }
     }
   };
+
+  const startEdit = (item: (typeof suratList)[number]) => { setEditingId(item.id); setNamaPemohon(item.nama_pemohon); setTanggalLahir(item.tanggal_lahir || ''); setJenisSurat(item.jenis_surat); setKeperluan(item.keperluan); };
 
   const [namaPemohon, setNamaPemohon] = useState('');
   const [tanggalLahir, setTanggalLahir] = useState('');
@@ -21,22 +24,24 @@ export default function SuratPage() {
 
   const filteredSurat = selectedRt === 'ALL' ? suratList : suratList.filter(s => s.rt === selectedRt);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!namaPemohon || !keperluan) return alert('Nama dan Keperluan wajib diisi');
 
-    addSurat({
+    const data = {
       nama_pemohon: namaPemohon,
       tanggal_lahir: tanggalLahir,
       jenis_surat: jenisSurat,
       keperluan,
       rt: selectedRt === 'ALL' ? '002' : selectedRt
-    } as any);
+    };
+    if (editingId) await updateData('surat', editingId, data); else await addSurat(data);
 
     setNamaPemohon('');
     setTanggalLahir('');
     setKeperluan('');
-    alert('Pengajuan surat pengantar berhasil didaftarkan!');
+    setEditingId(null);
+    alert(editingId ? 'Pengajuan surat berhasil diubah!' : 'Pengajuan surat pengantar berhasil didaftarkan!');
   };
 
   return (
@@ -86,6 +91,7 @@ export default function SuratPage() {
                       Setujui Surat
                     </button>
                   )}
+                  <button onClick={() => startEdit(item)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit Surat"><Pencil className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete(item.id, item.nama_pemohon)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Surat">
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -97,7 +103,7 @@ export default function SuratPage() {
 
         {/* Form Ajukan Surat (4 cols) */}
         <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl h-fit">
-          <h2 className="text-base sm:text-lg font-bold text-white mb-4">Buat Pengajuan Surat Baru</h2>
+          <div className="flex items-center justify-between mb-4"><h2 className="text-base sm:text-lg font-bold text-white">{editingId ? 'Edit Pengajuan Surat' : 'Buat Pengajuan Surat Baru'}</h2>{editingId && <button type="button" onClick={() => { setEditingId(null); setNamaPemohon(''); setTanggalLahir(''); setKeperluan(''); }} className="text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}</div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Nama Pemohon *</label>
@@ -148,7 +154,7 @@ export default function SuratPage() {
               type="submit"
               className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
             >
-              + Ajukan Surat
+              {editingId ? 'Simpan Perubahan' : '+ Ajukan Surat'}
             </button>
           </form>
         </div>

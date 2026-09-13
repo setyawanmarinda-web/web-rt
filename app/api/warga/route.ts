@@ -36,11 +36,30 @@ export async function POST(req: NextRequest) {
   try {
     await dbConnect();
     const body = await req.json();
+    if (!/^\d{16}$/.test(String(body.nik ?? ''))) {
+      return NextResponse.json({ error: 'NIK wajib terdiri dari tepat 16 angka' }, { status: 400 });
+    }
     const doc = await WargaModel.create(body);
     return NextResponse.json(toPlain(doc), { status: 201 });
   } catch (err) {
     console.error('[API/warga POST]', err);
     return NextResponse.json({ error: 'Gagal menyimpan data warga' }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    await dbConnect();
+    const { id, ...changes } = await req.json();
+    if (changes.nik !== undefined && !/^\d{16}$/.test(String(changes.nik))) {
+      return NextResponse.json({ error: 'NIK wajib terdiri dari tepat 16 angka' }, { status: 400 });
+    }
+    const doc = await WargaModel.findByIdAndUpdate(id, changes, { new: true });
+    if (!doc) return NextResponse.json({ error: 'Warga tidak ditemukan' }, { status: 404 });
+    return NextResponse.json(toPlain(doc));
+  } catch (err) {
+    console.error('[API/warga PATCH]', err);
+    return NextResponse.json({ error: 'Gagal mengubah data warga' }, { status: 500 });
   }
 }
 

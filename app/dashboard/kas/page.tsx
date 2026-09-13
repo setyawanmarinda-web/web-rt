@@ -5,7 +5,7 @@ import { useSimStore } from '@/lib/store';
 import { KasRT, Warga, RT_LIST } from '@/lib/types';
 import {
   Wallet, TrendingUp, TrendingDown, Users, PlusCircle, UserPlus,
-  HelpCircle, CreditCard, Sparkles, CheckCircle2, ShieldCheck, ArrowUpRight, ArrowDownRight, Tag, ArrowRight, Plus, Trash2, Calendar
+  HelpCircle, CreditCard, Sparkles, CheckCircle2, ShieldCheck, ArrowUpRight, ArrowDownRight, Tag, ArrowRight, Plus, Trash2, Calendar, Pencil, X
 } from 'lucide-react';
 import DatePickerField from '@/components/DatePickerField';
 
@@ -15,7 +15,7 @@ interface PerantaraItem {
 }
 
 export default function KasDashboardPage() {
-  const { selectedRt, kasList, wargaList, addKasTransaction, addWarga, getKasSummaryByRt, deleteData } = useSimStore();
+  const { selectedRt, kasList, wargaList, addKasTransaction, addWarga, updateData, getKasSummaryByRt, deleteData } = useSimStore();
 
   const summary = getKasSummaryByRt(selectedRt);
 
@@ -40,6 +40,7 @@ export default function KasDashboardPage() {
 
   // Form State Tambah Warga
   const [namaWarga, setNamaWarga] = useState<string>('');
+  const [nikWarga, setNikWarga] = useState<string>('');
   const [tanggalLahirWarga, setTanggalLahirWarga] = useState<string>('');
   const [alamatWarga, setAlamatWarga] = useState<string>('');
   const [statusTinggal, setStatusTinggal] = useState<'Tetap' | 'Kontrak'>('Tetap');
@@ -47,6 +48,7 @@ export default function KasDashboardPage() {
 
   // Toast feedback
   const [notification, setNotification] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setNotification(msg);
@@ -84,7 +86,7 @@ export default function KasDashboardPage() {
   };
 
   // Submit Transaction
-  const handleKasSubmit = (e: React.FormEvent) => {
+  const handleKasSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || amount <= 0) return alert('Nominal harus lebih besar dari 0');
 
@@ -100,7 +102,7 @@ export default function KasDashboardPage() {
       fullKeterangan += ` (${rincianSplit})`;
     }
 
-    addKasTransaction({
+    const data = {
       keterangan: fullKeterangan,
       jumlah: Number(amount),
       jenis: transType,
@@ -112,33 +114,50 @@ export default function KasDashboardPage() {
       rincian_split: rincianSplit,
       diskon_keringanan: diskonKeringanan,
       tanggal_transaksi: tanggalTransaksi
-    } as any);
+    };
+    if (editingId) await updateData('kas', editingId, data);
+    else await addKasTransaction(data);
 
-    showToast(`✅ Transaksi ${transType} Rp ${Number(amount).toLocaleString('id-ID')} berhasil dicatat!`);
+    showToast(`✅ Transaksi ${transType} Rp ${Number(amount).toLocaleString('id-ID')} berhasil ${editingId ? 'diubah' : 'dicatat'}!`);
 
     // Reset Form
     setCatatanText('');
     setNamaPembayar('');
     setPerantaraList([{ nama: '', alamat: '' }]);
     setRincianSplit('');
+    setEditingId(null);
   };
 
-  // Submit New Warga (NIK Removed, Tanggal Lahir & Alamat Added)
+  const startEdit = (item: KasRT) => {
+    setEditingId(item.id); setTransType(item.jenis); setSelectedPos(item.pos); setAmount(item.jumlah);
+    setMetode(item.metode); setNamaPembayar(item.nama_pembayar || ''); setRincianSplit(item.rincian_split || '');
+    setDiskonKeringanan(Boolean(item.diskon_keringanan)); setTanggalTransaksi(item.tanggal_transaksi || todayStr);
+    setCatatanText(item.keterangan); setPerantaraList(item.perantara_list?.length ? item.perantara_list : [{ nama: '', alamat: '' }]);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null); setCatatanText(''); setNamaPembayar(''); setRincianSplit(''); setPerantaraList([{ nama: '', alamat: '' }]);
+  };
+
+  // Submit New Warga
   const handleWargaSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (nikWarga.length !== 16) return alert('NIK wajib diisi 16 digit');
     if (!namaWarga || !alamatWarga) return alert('Nama Lengkap dan Alamat Rumah wajib diisi');
 
     addWarga({
       nama_lengkap: namaWarga,
+      nik: nikWarga,
       tanggal_lahir: tanggalLahirWarga,
       alamat: alamatWarga,
       status_tinggal: statusTinggal,
       rt: rtWarga,
       rw: '012'
-    } as any);
+    });
 
     showToast(`✅ Data warga "${namaWarga}" (${alamatWarga}) berhasil ditambahkan!`);
     setNamaWarga('');
+    setNikWarga('');
     setTanggalLahirWarga('');
     setAlamatWarga('');
   };
@@ -216,7 +235,7 @@ export default function KasDashboardPage() {
                 <PlusCircle className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-white">Form Catat Transaksi Keuangan</h2>
+                <div className="flex items-center gap-2"><h2 className="text-base sm:text-lg font-bold text-white">{editingId ? 'Edit Transaksi Keuangan' : 'Form Catat Transaksi Keuangan'}</h2>{editingId && <button type="button" onClick={cancelEdit} className="text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}</div>
                 <p className="text-xs text-slate-400">Fitur tanggal otomatis, multi-titipan via tetangga (nama & alamat)</p>
               </div>
             </div>
@@ -442,7 +461,7 @@ export default function KasDashboardPage() {
                   : 'bg-gradient-to-r from-red-500 to-rose-600 text-white hover:brightness-110'
               }`}
             >
-              {transType === 'Masuk' ? '+ Simpan Pemasukan Iuran' : '- Simpan Pengeluaran Anggaran'}
+              {editingId ? 'Simpan Perubahan' : transType === 'Masuk' ? '+ Simpan Pemasukan Iuran' : '- Simpan Pengeluaran Anggaran'}
             </button>
 
           </form>
@@ -457,11 +476,26 @@ export default function KasDashboardPage() {
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-bold text-white">Pendataan Warga Baru</h2>
-                <p className="text-xs text-slate-400">Tanpa NIK, Tanggal Lahir & Alamat Lengkap</p>
+                <p className="text-xs text-slate-400">NIK, Tanggal Lahir & Alamat Lengkap</p>
               </div>
             </div>
 
             <form onSubmit={handleWargaSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">NIK *</label>
+                <input
+                  type="text"
+                  value={nikWarga}
+                  onChange={(e) => setNikWarga(e.target.value.replace(/\D/g, '').slice(0, 16))}
+                  placeholder="16 digit NIK"
+                  inputMode="numeric"
+                  pattern="[0-9]{16}"
+                  minLength={16}
+                  maxLength={16}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-teal-500"
+                  required
+                />
+              </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Nama Lengkap *</label>
                 <input
@@ -503,7 +537,7 @@ export default function KasDashboardPage() {
                   >
                     {RT_LIST.map((rt) => (
                       <option key={rt} value={rt}>
-                        RT {rt} {rt === '002' ? '(Default)' : ''}
+                        RT {rt}
                       </option>
                     ))}
                   </select>
@@ -591,9 +625,7 @@ export default function KasDashboardPage() {
                   Keringanan Lansia/Janda
                   </span>
                 )}
-                <button onClick={() => handleDelete(item.id, item.keterangan)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors flex-shrink-0" title="Hapus">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex gap-2"><button onClick={() => startEdit(item)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit"><Pencil className="w-3.5 h-3.5" /></button><button onClick={() => handleDelete(item.id, item.keterangan)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors flex-shrink-0" title="Hapus"><Trash2 className="w-3.5 h-3.5" /></button></div>
               </div>
             </div>
           ))}
@@ -666,9 +698,7 @@ export default function KasDashboardPage() {
                     {item.jenis === 'Masuk' ? '+' : '-'} Rp {Number(item.jumlah).toLocaleString('id-ID')}
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
-                    <button onClick={() => handleDelete(item.id, item.keterangan)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Transaksi">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <button onClick={() => startEdit(item)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit Transaksi"><Pencil className="w-4 h-4" /></button><button onClick={() => handleDelete(item.id, item.keterangan)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Transaksi"><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
               ))}

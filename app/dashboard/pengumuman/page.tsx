@@ -2,10 +2,11 @@
 
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
-import { Megaphone, Plus, BellRing, Trash2 } from 'lucide-react';
+import { Megaphone, Plus, BellRing, Trash2, Pencil, X } from 'lucide-react';
 
 export default function PengumumanPage() {
-  const { pengumumanList, selectedRt, addPengumuman, deleteData } = useSimStore();
+  const { pengumumanList, selectedRt, addPengumuman, updateData, deleteData } = useSimStore();
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string, judul: string) => {
     if (window.confirm(`Yakin ingin menghapus pengumuman "${judul}"?`)) {
@@ -13,28 +14,32 @@ export default function PengumumanPage() {
     }
   };
 
+  const startEdit = (item: (typeof pengumumanList)[number]) => { setEditingId(item.id); setJudul(item.judul); setIsi(item.isi); setKategori(item.kategori); };
+
   const [judul, setJudul] = useState('');
   const [isi, setIsi] = useState('');
   const [kategori, setKategori] = useState<'Penting' | 'Informasi' | 'Himbauan'>('Penting');
 
   const filtered = selectedRt === 'ALL' ? pengumumanList : pengumumanList.filter(p => p.rt === selectedRt);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!judul || !isi) return alert('Judul dan isi wajib diisi');
 
-    addPengumuman({
+    const data = {
       judul,
       isi,
       kategori,
       tanggal: new Date().toISOString().split('T')[0],
       status: 'Aktif',
       rt: selectedRt === 'ALL' ? '002' : selectedRt
-    });
+    } as const;
+    if (editingId) await updateData('pengumuman', editingId, data); else await addPengumuman(data);
 
     setJudul('');
     setIsi('');
-    alert('Pengumuman berhasil dipublish!');
+    setEditingId(null);
+    alert(editingId ? 'Pengumuman berhasil diubah!' : 'Pengumuman berhasil dipublish!');
   };
 
   return (
@@ -66,9 +71,7 @@ export default function PengumumanPage() {
               <h3 className="text-lg font-bold text-white mb-2">{item.judul}</h3>
               <p className="text-slate-300 text-sm leading-relaxed mb-3">{item.isi}</p>
               <div className="flex justify-end">
-                <button onClick={() => handleDelete(item.id, item.judul)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Pengumuman">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex gap-2"><button onClick={() => startEdit(item)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit Pengumuman"><Pencil className="w-4 h-4" /></button><button onClick={() => handleDelete(item.id, item.judul)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Pengumuman"><Trash2 className="w-4 h-4" /></button></div>
               </div>
             </div>
           ))}
@@ -76,7 +79,7 @@ export default function PengumumanPage() {
 
         {/* Form Tambah (4 cols) */}
         <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
-          <h2 className="text-lg font-bold text-white mb-4">Buat Pengumuman Baru</h2>
+          <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-bold text-white">{editingId ? 'Edit Pengumuman' : 'Buat Pengumuman Baru'}</h2>{editingId && <button type="button" onClick={() => { setEditingId(null); setJudul(''); setIsi(''); }} className="text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}</div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">Judul Pengumuman *</label>
@@ -119,7 +122,7 @@ export default function PengumumanPage() {
               type="submit"
               className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
             >
-              + Broadcast Pengumuman
+              {editingId ? 'Simpan Perubahan' : '+ Broadcast Pengumuman'}
             </button>
           </form>
         </div>

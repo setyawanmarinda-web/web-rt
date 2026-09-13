@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SIM RW 012
 
-## Getting Started
+Sistem administrasi digital untuk pengurus RT/RW. Aplikasi ini mengelola data warga, kas dan iuran, kegiatan, pengumuman, UMKM, layanan surat, arsip digital, serta inventori.
 
-First, run the development server:
+## Fitur Utama
+
+- Dashboard ringkasan warga, saldo kas, kegiatan, dan pengingat ulang tahun.
+- Toggle data `DEV` dan `LIVE (MongoDB)` dari header dashboard.
+- Pendataan warga dengan NIK tepat 16 angka, tanggal lahir, alamat, RT, dan status tinggal.
+- Kategori usia otomatis: Balita, Anak, Remaja, Dewasa, dan Lansia.
+- Tabel warga dengan usia dan kategori usia yang diurutkan berdasarkan alamat.
+- Kas RT dengan tiga pos: Kas RT, Sampah & Keamanan, dan Dana Sosial.
+- CRUD agenda kegiatan, pengumuman, UMKM, layanan surat, dan arsip digital.
+- Upload arsip PDF dan foto UMKM melalui klik atau drag-and-drop, maksimal 1 MB.
+- Inventori barang beserta riwayat stok, peminjaman, dan koreksi.
+
+## Teknologi
+
+- Next.js App Router dan React
+- TypeScript
+- Tailwind CSS
+- Mongoose dan MongoDB
+- LocalStorage untuk mode DEV
+
+## Persiapan
+
+Prasyarat: Node.js 20 atau lebih baru, npm, dan MongoDB jika memakai mode LIVE.
+
+```bash
+npm install
+```
+
+Buat file `.env.local` jika memakai MongoDB:
+
+```env
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/sim_rw_012
+NEXT_PUBLIC_DATA_MODE=dev
+```
+
+`NEXT_PUBLIC_DATA_MODE` dapat diisi `dev` atau `live`. Pilihan mode dari toggle dashboard disimpan di browser.
+
+## Menjalankan Aplikasi
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka [http://localhost:3000](http://localhost:3000). Untuk production:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Mode Data
 
-## Learn More
+### DEV
 
-To learn more about Next.js, take a look at the following resources:
+Mode DEV tidak membutuhkan MongoDB. Data disimpan di LocalStorage browser menggunakan key versi `v2`. Dataset dummy sudah dikosongkan sehingga aplikasi dimulai tanpa data contoh.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### LIVE
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Mode LIVE mengambil data dari MongoDB melalui route API di `app/api`. Pastikan `MONGO_URI` tersedia sebelum mengganti mode. Data LIVE bersifat persisten.
 
-## Deploy on Vercel
+## Struktur Penting
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```text
+app/api/                    Route API MongoDB
+app/dashboard/              Halaman administrasi
+components/                 Komponen UI reusable
+lib/store.ts                State, mode data, CRUD, dan LocalStorage
+lib/mongoose.ts             Schema dan model MongoDB
+lib/types.ts                Kontrak data TypeScript
+lib/wargaUtils.ts           Perhitungan usia dan ulang tahun
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Halaman administrasi utama berada di `/dashboard`. Menu Inventori tersedia di sidebar sebelum Pengaturan Sistem.
+
+## Validasi Data
+
+- NIK warga: wajib tepat 16 angka, tanpa huruf atau karakter lain.
+- Arsip: hanya PDF, maksimal 1 MB.
+- Foto UMKM: hanya JPG atau PNG, maksimal 1 MB.
+- Tanggal menggunakan komponen `DatePickerField`.
+- Data dapat diedit dan dihapus dari menu terkait.
+
+## Verifikasi
+
+```bash
+npx tsc --noEmit
+npm run lint
+```
+
+Lint dapat menampilkan warning atau error lama pada file yang belum dirapikan. Typecheck adalah pemeriksaan kontrak TypeScript utama.
+
+## Catatan Produksi
+
+Upload saat ini disimpan sebagai data URL. Untuk deployment produksi dengan file besar atau banyak pengguna, gunakan object storage seperti S3, Cloudinary, atau Vercel Blob dan simpan URL-nya di MongoDB.
+
+Dokumen setup MongoDB tambahan tersedia di [MONGODB_SETUP.md](MONGODB_SETUP.md).

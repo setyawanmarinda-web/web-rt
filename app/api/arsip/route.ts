@@ -33,6 +33,20 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    await dbConnect();
+    const { id, ...changes } = await req.json();
+    const doc = await ArsipModel.findByIdAndUpdate(id, changes, { new: true });
+    if (!doc) return NextResponse.json({ error: 'Arsip tidak ditemukan' }, { status: 404 });
+    const obj = doc.toObject() as Record<string, unknown>;
+    return NextResponse.json({ ...obj, id: doc._id.toString(), _id: undefined, __v: undefined });
+  } catch (err) {
+    console.error('[API/arsip PATCH]', err);
+    return NextResponse.json({ error: 'Gagal mengubah arsip' }, { status: 500 });
+  }
+}
+
 // DELETE /api/arsip?id=xyz
 export async function DELETE(req: NextRequest) {
   try {

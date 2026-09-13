@@ -39,6 +39,20 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PATCH(req: NextRequest) {
+  try {
+    await dbConnect();
+    const { id, ...changes } = await req.json();
+    const doc = await KasRTModel.findByIdAndUpdate(id, changes, { new: true });
+    if (!doc) return NextResponse.json({ error: 'Transaksi tidak ditemukan' }, { status: 404 });
+    const obj = doc.toObject() as Record<string, unknown>;
+    return NextResponse.json({ ...obj, id: doc._id.toString(), _id: undefined, __v: undefined });
+  } catch (err) {
+    console.error('[API/kas PATCH]', err);
+    return NextResponse.json({ error: 'Gagal mengubah transaksi kas' }, { status: 500 });
+  }
+}
+
 // DELETE /api/kas?id=xyz
 export async function DELETE(req: NextRequest) {
   try {
