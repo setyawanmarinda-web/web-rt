@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
     const data = docs.map((d) => {
       const obj = { ...d } as Record<string, unknown>;
       obj.id = (obj._id as { toString(): string })?.toString();
+      obj.nominal_iuran = Number(obj.nominal_iuran ?? 0);
       delete obj._id;
       delete obj.__v;
       return obj;
@@ -39,7 +40,11 @@ export async function POST(req: NextRequest) {
     if (!/^\d{16}$/.test(String(body.nik ?? ''))) {
       return NextResponse.json({ error: 'NIK wajib terdiri dari tepat 16 angka' }, { status: 400 });
     }
-    const doc = await WargaModel.create(body);
+    const nominalIuran = Number(body.nominal_iuran ?? 0);
+    if (!Number.isFinite(nominalIuran) || nominalIuran < 0) {
+      return NextResponse.json({ error: 'Nominal iuran harus berupa angka 0 atau lebih' }, { status: 400 });
+    }
+    const doc = await WargaModel.create({ ...body, nominal_iuran: nominalIuran });
     return NextResponse.json(toPlain(doc), { status: 201 });
   } catch (err) {
     console.error('[API/warga POST]', err);
@@ -54,7 +59,18 @@ export async function PATCH(req: NextRequest) {
     if (changes.nik !== undefined && !/^\d{16}$/.test(String(changes.nik))) {
       return NextResponse.json({ error: 'NIK wajib terdiri dari tepat 16 angka' }, { status: 400 });
     }
-    const doc = await WargaModel.findByIdAndUpdate(id, changes, { new: true });
+    if (changes.nominal_iuran !== undefined) {
+      const nominalIuran = Number(changes.nominal_iuran);
+      if (!Number.isFinite(nominalIuran) || nominalIuran < 0) {
+        return NextResponse.json({ error: 'Nominal iuran harus berupa angka 0 atau lebih' }, { status: 400 });
+      }
+      changes.nominal_iuran = nominalIuran;
+    }
+    const doc = await WargaModel.findByIdAndUpdate(
+      id,
+      { $set: changes },
+      { new: true, runValidators: true, strict: false },
+    );
     if (!doc) return NextResponse.json({ error: 'Warga tidak ditemukan' }, { status: 404 });
     return NextResponse.json(toPlain(doc));
   } catch (err) {

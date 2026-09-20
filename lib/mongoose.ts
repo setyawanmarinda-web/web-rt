@@ -46,6 +46,12 @@ const WargaSchema = new Schema({
     type: String,
   },
 
+  nominal_iuran: {
+    type: Number,
+    min: 0,
+    default: 0,
+  },
+
   alamat: {
     type: String,
     required: true,
@@ -63,6 +69,7 @@ const PerantaraSchema = new Schema(
   {
     nama: String,
     alamat: String,
+    nominal: { type: Number, min: 0 },
   },
   {
     _id: false,
@@ -88,7 +95,7 @@ const KasRTSchema = new Schema({
 
   pos: {
     type: String,
-    enum: ['Kas RT', 'Sampah & Keamanan', 'Dana Sosial'],
+    enum: ['Kas RT', 'Sampah & Keamanan', 'Dana Sosial', 'Dana 17an'],
     required: true,
   },
 
@@ -104,6 +111,10 @@ const KasRTSchema = new Schema({
   },
 
   nama_pembayar: {
+    type: String,
+  },
+
+  alamat_pembayar: {
     type: String,
   },
 
@@ -129,6 +140,21 @@ const KasRTSchema = new Schema({
     type: String,
     default: () => new Date().toISOString(),
   },
+});
+
+// ─── Simpan Pinjam ───────────────────────────────────────────────────────────
+
+const SimpanPinjamSchema = new Schema({
+  warga_id: String,
+  nama: { type: String, required: true, trim: true },
+  alamat: { type: String, required: true, trim: true },
+  jenis: { type: String, enum: ['Simpan', 'Pinjam', 'Cicilan'], required: true },
+  nominal: { type: Number, required: true, min: 1 },
+  tenor_bulan: { type: Number, enum: [3, 6, 12] },
+  bunga_persen: { type: Number, min: 0 },
+  rt: { type: String, required: true },
+  tanggal_transaksi: { type: String, required: true },
+  created_at: { type: String, default: () => new Date().toISOString() },
 });
 
 // ─── Kegiatan ─────────────────────────────────────────────────────────────────
@@ -223,6 +249,10 @@ const UMKMSchema = new Schema({
     required: true,
   },
 
+  alamat_rumah: {
+    type: String,
+  },
+
   deskripsi: {
     type: String,
   },
@@ -244,6 +274,11 @@ const UMKMSchema = new Schema({
   rt: {
     type: String,
     required: true,
+  },
+
+  urutan: {
+    type: Number,
+    default: 0,
   },
 });
 
@@ -664,6 +699,9 @@ export const WargaModel =
 
 export const KasRTModel =
   models.KasRT || model('KasRT', KasRTSchema);
+
+export const SimpanPinjamModel =
+  models.SimpanPinjam || model('SimpanPinjam', SimpanPinjamSchema);
 
 export const IuranKewajibanModel =
   models.IuranKewajiban || model('IuranKewajiban', IuranKewajibanSchema);

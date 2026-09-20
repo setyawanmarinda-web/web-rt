@@ -7,6 +7,7 @@ export interface Warga {
   rt: string;
   rw: string;
   no_hp?: string;
+  nominal_iuran?: number;
   alamat: string;
   created_at: string;
 }
@@ -16,14 +17,44 @@ export interface KasRT {
   keterangan: string;
   jumlah: number;
   jenis: 'Masuk' | 'Keluar';
-  pos: 'Kas RT' | 'Sampah & Keamanan' | 'Dana Sosial';
+  pos: 'Kas RT' | 'Sampah & Keamanan' | 'Dana Sosial' | 'Dana 17an';
   rt: string;
   metode: 'Cash' | 'Transfer' | 'Split' | 'Titipan';
   nama_pembayar?: string;
-  perantara_list?: { nama: string; alamat: string }[];
+  alamat_pembayar?: string;
+  perantara_list?: { nama: string; alamat: string; nominal?: number }[];
   rincian_split?: string;
   diskon_keringanan?: boolean;
   tanggal_transaksi?: string;
+  created_at: string;
+}
+
+export interface SimpanPinjam {
+  id: string;
+  warga_id?: string;
+  nama: string;
+  alamat: string;
+  jenis: 'Simpan' | 'Pinjam' | 'Cicilan';
+  nominal: number;
+  tenor_bulan?: 3 | 6 | 12;
+  bunga_persen?: number;
+  rt: string;
+  tanggal_transaksi: string;
+  created_at: string;
+}
+
+export interface IuranKewajiban {
+  id: string;
+  warga_id: string;
+  rt: string;
+  tahun: number;
+  bulan: number;
+  nominal_normal: number;
+  nominal_wajib: number;
+  nominal_terbayar: number;
+  status: 'Belum Bayar' | 'Sebagian' | 'Lunas';
+  keringanan?: boolean;
+  catatan_keringanan?: string;
   created_at: string;
 }
 
@@ -53,11 +84,13 @@ export interface UMKM {
   id: string;
   nama_usaha: string;
   pemilik: string;
+  alamat_rumah?: string;
   deskripsi: string;
   kategori: 'Kuliner' | 'Jasa' | 'Kelontong' | 'Fashion' | 'Lainnya';
   whatsapp: string;
   foto_url?: string;
   rt: string;
+  urutan?: number;
 }
 
 export interface Surat {

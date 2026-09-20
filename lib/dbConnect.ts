@@ -37,6 +37,12 @@ async function dbConnect(): Promise<typeof mongoose> {
       .then((mg) => {
         console.log('✅ MongoDB Connected');
         return mg;
+      })
+      .catch((error) => {
+        // Do not keep a rejected connection promise after a transient failure.
+        cached.promise = null;
+        cached.conn = null;
+        throw error;
       });
   }
 

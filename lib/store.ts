@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Dispatch, SetStateAction } from 'react';
 import {
-  Warga, KasRT, Kegiatan, Pengumuman, UMKM, Surat, Arsip,
+  Warga, KasRT, SimpanPinjam, IuranKewajiban, Kegiatan, Pengumuman, UMKM, Surat, Arsip,
 } from './types';
 import { DATA_MODE } from './dataMode';
 
@@ -10,6 +10,7 @@ import { DATA_MODE } from './dataMode';
 const STORAGE_KEYS = {
   WARGA:      'sim_rw_warga_v2',
   KAS:        'sim_rw_kas_v2',
+  SIMPAN_PINJAM: 'sim_rw_simpan_pinjam_v1',
   KEGIATAN:   'sim_rw_kegiatan_v2',
   PENGUMUMAN: 'sim_rw_pengumuman_v2',
   UMKM:       'sim_rw_umkm_v2',
@@ -47,6 +48,8 @@ export function useSimStore() {
   const [error,           setError]            = useState<string | null>(null);
   const [wargaList,       setWargaList]        = useState<Warga[]>([]);
   const [kasList,         setKasList]          = useState<KasRT[]>([]);
+  const [simpanPinjamList, setSimpanPinjamList] = useState<SimpanPinjam[]>([]);
+  const [iuranList,        setIuranList]       = useState<IuranKewajiban[]>([]);
   const [kegiatanList,    setKegiatanList]     = useState<Kegiatan[]>([]);
   const [pengumumanList,  setPengumumanList]   = useState<Pengumuman[]>([]);
   const [umkmList,        setUmkmList]         = useState<UMKM[]>([]);
@@ -80,6 +83,8 @@ export function useSimStore() {
         };
         setWargaList(s(STORAGE_KEYS.WARGA, []));
         setKasList(s(STORAGE_KEYS.KAS, []));
+        setSimpanPinjamList(s(STORAGE_KEYS.SIMPAN_PINJAM, []));
+        setIuranList([]);
         setKegiatanList(s(STORAGE_KEYS.KEGIATAN, []));
         setPengumumanList(s(STORAGE_KEYS.PENGUMUMAN, []));
         setUmkmList(s(STORAGE_KEYS.UMKM, []));
@@ -103,15 +108,19 @@ export function useSimStore() {
       Promise.all([
         apiFetch<Warga[]>('/api/warga'),
         apiFetch<KasRT[]>('/api/kas'),
+        apiFetch<SimpanPinjam[]>('/api/simpan-pinjam'),
+        apiFetch<IuranKewajiban[]>('/api/iuran'),
         apiFetch<Kegiatan[]>('/api/kegiatan'),
         apiFetch<Pengumuman[]>('/api/pengumuman'),
         apiFetch<UMKM[]>('/api/umkm'),
         apiFetch<Surat[]>('/api/surat'),
         apiFetch<Arsip[]>('/api/arsip'),
       ])
-        .then(([warga, kas, kegiatan, pengumuman, umkm, surat, arsip]) => {
+        .then(([warga, kas, simpanPinjam, iuran, kegiatan, pengumuman, umkm, surat, arsip]) => {
           setWargaList(warga);
           setKasList(kas);
+          setSimpanPinjamList(simpanPinjam);
+          setIuranList(iuran);
           setKegiatanList(kegiatan);
           setPengumumanList(pengumuman);
           setUmkmList(umkm);
@@ -183,6 +192,24 @@ export function useSimStore() {
       saveLocal(STORAGE_KEYS.KAS, updated);
       return item;
     }
+  };
+
+  // ─── SIMPAN PINJAM ───────────────────────────────────────────────────────
+  const addSimpanPinjamTransaction = async (newItem: Omit<SimpanPinjam, 'id' | 'created_at'>) => {
+    if (isLive) {
+      const saved = await apiFetch<SimpanPinjam>('/api/simpan-pinjam', {
+        method: 'POST',
+        body: JSON.stringify(newItem),
+      });
+      setSimpanPinjamList((prev) => [saved, ...prev]);
+      return saved;
+    }
+
+    const item: SimpanPinjam = { ...newItem, id: 'sp-' + Date.now(), created_at: new Date().toISOString() };
+    const updated = [item, ...simpanPinjamList];
+    setSimpanPinjamList(updated);
+    saveLocal(STORAGE_KEYS.SIMPAN_PINJAM, updated);
+    return item;
   };
 
   // ─── KEGIATAN ─────────────────────────────────────────────────────────────
@@ -290,7 +317,7 @@ export function useSimStore() {
   };
 
   const updateData = async (
-    module: 'warga'|'kas'|'kegiatan'|'pengumuman'|'umkm'|'surat'|'arsip',
+    module: 'warga'|'kas'|'simpan-pinjam'|'kegiatan'|'pengumuman'|'umkm'|'surat'|'arsip',
     id: string,
     changes: Record<string, unknown>,
   ) => {
@@ -299,19 +326,20 @@ export function useSimStore() {
         method: 'PATCH',
         body: JSON.stringify({ id, ...changes }),
       });
-      const replace = <T extends { id: string }>(list: T[], setList: (value: T[]) => void) => {
-        setList(list.map((item) => item.id === id ? { ...item, ...updated, id } : item));
+      const replace = <T extends { id: string }>(setList: Dispatch<SetStateAction<T[]>>) => {
+        setList((current) => current.map((item) => item.id === id ? { ...item, ...updated, id } : item));
       };
       switch (module) {
-        case 'warga': replace(wargaList, setWargaList); break;
-        case 'kas': replace(kasList, setKasList); break;
-        case 'kegiatan': replace(kegiatanList, setKegiatanList); break;
-        case 'pengumuman': replace(pengumumanList, setPengumumanList); break;
-        case 'umkm': replace(umkmList, setUmkmList); break;
-        case 'surat': replace(suratList, setSuratList); break;
-        case 'arsip': replace(arsipList, setArsipList); break;
+        case 'warga': replace(setWargaList); break;
+        case 'kas': replace(setKasList); break;
+        case 'simpan-pinjam': replace(setSimpanPinjamList); break;
+        case 'kegiatan': replace(setKegiatanList); break;
+        case 'pengumuman': replace(setPengumumanList); break;
+        case 'umkm': replace(setUmkmList); break;
+        case 'surat': replace(setSuratList); break;
+        case 'arsip': replace(setArsipList); break;
       }
-      return;
+      return updated;
     }
 
     const replaceLocal = <T extends { id: string }>(list: T[], setList: (value: T[]) => void, key: string) => {
@@ -322,6 +350,7 @@ export function useSimStore() {
     switch (module) {
       case 'warga': replaceLocal(wargaList, setWargaList, STORAGE_KEYS.WARGA); break;
       case 'kas': replaceLocal(kasList, setKasList, STORAGE_KEYS.KAS); break;
+      case 'simpan-pinjam': replaceLocal(simpanPinjamList, setSimpanPinjamList, STORAGE_KEYS.SIMPAN_PINJAM); break;
       case 'kegiatan': replaceLocal(kegiatanList, setKegiatanList, STORAGE_KEYS.KEGIATAN); break;
       case 'pengumuman': replaceLocal(pengumumanList, setPengumumanList, STORAGE_KEYS.PENGUMUMAN); break;
       case 'umkm': replaceLocal(umkmList, setUmkmList, STORAGE_KEYS.UMKM); break;
@@ -332,7 +361,7 @@ export function useSimStore() {
 
 
   // ─── HAPUS DATA (GENERIC) ─────────────────────────────────────────────────
-  const deleteData = async (module: 'warga'|'kas'|'kegiatan'|'pengumuman'|'umkm'|'surat'|'arsip', id: string) => {
+  const deleteData = async (module: 'warga'|'kas'|'simpan-pinjam'|'kegiatan'|'pengumuman'|'umkm'|'surat'|'arsip', id: string) => {
     if (isLive) {
       await apiFetch(`/api/${module}?id=${id}`, { method: 'DELETE' });
     }
@@ -348,6 +377,11 @@ export function useSimStore() {
         const updatedKas = kasList.filter(x => x.id !== id);
         setKasList(updatedKas);
         if (!isLive) saveLocal(STORAGE_KEYS.KAS, updatedKas);
+        break;
+      case 'simpan-pinjam':
+        const updatedSimpanPinjam = simpanPinjamList.filter(x => x.id !== id);
+        setSimpanPinjamList(updatedSimpanPinjam);
+        if (!isLive) saveLocal(STORAGE_KEYS.SIMPAN_PINJAM, updatedSimpanPinjam);
         break;
       case 'kegiatan':
         const updatedKeg = kegiatanList.filter(x => x.id !== id);
@@ -384,7 +418,7 @@ export function useSimStore() {
     const posBalance: Record<string, number> & {
       totalMasuk: number; totalKeluar: number; saldoAkhir: number;
     } = {
-      'Kas RT': 0, 'Sampah & Keamanan': 0, 'Dana Sosial': 0,
+      'Kas RT': 0, 'Sampah & Keamanan': 0, 'Dana Sosial': 0, 'Dana 17an': 0,
       totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0,
     };
 
@@ -413,6 +447,8 @@ export function useSimStore() {
     // Data
     wargaList,
     kasList,
+    simpanPinjamList,
+    iuranList,
     kegiatanList,
     pengumumanList,
     umkmList,
@@ -424,6 +460,7 @@ export function useSimStore() {
     // Actions
     addWarga,
     addKasTransaction,
+    addSimpanPinjamTransaction,
     addKegiatan,
     addPengumuman,
     addUmkm,

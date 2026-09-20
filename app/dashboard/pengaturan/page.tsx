@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Settings, Shield, Database, Save, CheckCircle2 } from 'lucide-react';
+import { formatRupiahInput, parseRupiahInput } from '@/lib/currency';
 
 export default function PengaturanPage() {
   const [namaRw, setNamaRw] = useState('RW 012 Kelurahan Bahagia');
@@ -62,9 +63,10 @@ export default function PengaturanPage() {
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Standar Iuran Bulanan / KK (Rp)</label>
                 <input
-                  type="number"
-                  value={standardIuran}
-                  onChange={(e) => setStandardIuran(Number(e.target.value))}
+                  type="text"
+                  inputMode="numeric"
+                  value={formatRupiahInput(standardIuran)}
+                  onChange={(e) => setStandardIuran(parseRupiahInput(e.target.value))}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-emerald-500"
                 />
               </div>
@@ -72,9 +74,10 @@ export default function PengaturanPage() {
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Alokasi Wajib Sampah & Keamanan (Rp)</label>
                 <input
-                  type="number"
-                  value={standardSatpam}
-                  onChange={(e) => setStandardSatpam(Number(e.target.value))}
+                  type="text"
+                  inputMode="numeric"
+                  value={formatRupiahInput(standardSatpam)}
+                  onChange={(e) => setStandardSatpam(parseRupiahInput(e.target.value))}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-emerald-500"
                 />
               </div>
