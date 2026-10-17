@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Settings, Shield, Database, Save, CheckCircle2 } from 'lucide-react';
 import { formatRupiahInput, parseRupiahInput } from '@/lib/currency';
+import { SortGroup } from '@/components/LayoutEdit';
 
 export default function PengaturanPage() {
   const [namaRw, setNamaRw] = useState('RW 012 Kelurahan Bahagia');
@@ -26,16 +27,18 @@ export default function PengaturanPage() {
         </div>
       )}
 
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <SortGroup attr="data-lo" storageKey="lo-pengaturan" className="space-y-8">
+<div data-lo="b1" className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white">Pengaturan Sistem & Otorisasi</h1>
           <p className="text-slate-400 text-sm">Pengaturan profil kepengurusan RW 012, alamat sekretariat, & konfigurasi nominal iuran</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div data-lo="b2">
+<SortGroup attr="data-lo-p" storageKey="lo-pengaturan-b2" layout="flow" gap="2rem">
         
-        <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+        <div data-lo-p="p1" data-lo-w="8" data-lo-s="n" className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
           <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3">Profil Kepengurusan & Standar Nominal</h2>
           
           <form onSubmit={handleSave} className="space-y-4">
@@ -93,7 +96,7 @@ export default function PengaturanPage() {
           </form>
         </div>
 
-        <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 h-fit">
+        <div data-lo-p="p2" data-lo-w="4" data-lo-s="n" className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 h-fit">
           <div className="flex items-center gap-2 text-emerald-400 font-bold">
             <Database className="w-5 h-5" />
             <span>Konektivitas Supabase Database</span>
@@ -110,7 +113,9 @@ export default function PengaturanPage() {
           </div>
         </div>
 
-      </div>
+      </SortGroup>
+</div>
+</SortGroup>
     </div>
   );
 }

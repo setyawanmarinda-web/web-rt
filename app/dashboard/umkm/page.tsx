@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { useSimStore } from '@/lib/store';
 import { Download, GripVertical, MessageCircle, Store, Trash2, Pencil, Upload, X } from 'lucide-react';
 import type { UMKM } from '@/lib/types';
+import { SortGroup } from '@/components/LayoutEdit';
 
 export default function UmkmPage() {
   const { umkmList, wargaList, addUmkm, updateData, deleteData } = useSimStore();
@@ -219,7 +220,8 @@ export default function UmkmPage() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <SortGroup attr="data-lo" storageKey="lo-umkm" className="space-y-8">
+<div data-lo="b1" className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white">Direktori UMKM Warga RW 012</h1>
           <p className="text-slate-400 text-sm">Promosi usaha warga lokal (Agen Cemilan, Jasa Perbaikan, Kuliner) dengan kontak WhatsApp langsung</p>
@@ -230,10 +232,11 @@ export default function UmkmPage() {
         {wargaNames.map((name) => <option key={name} value={name} />)}
       </datalist>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div data-lo="b2">
+<SortGroup attr="data-lo-p" storageKey="lo-umkm-b2" layout="flow" gap="1.5rem">
         
         {/* Grid UMKM List (8 cols) */}
-        <div className="lg:col-span-9">
+        <div data-lo-p="p1" data-lo-w="9" data-lo-s="n" className="lg:col-span-9">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-base font-bold text-white">Daftar UMKM</h2>
@@ -299,7 +302,7 @@ export default function UmkmPage() {
         </div>
 
         {/* Form Tambah UMKM (4 cols) */}
-        <div className="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl h-fit">
+        <div data-lo-p="p2" data-lo-w="3" data-lo-s="n" className="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl h-fit">
           <div className="flex items-center gap-2 mb-4">
             <Store className="w-5 h-5 text-emerald-400" />
             <h2 className="text-lg font-bold text-white">{editingId ? 'Edit UMKM' : 'Daftarkan UMKM Anda'}</h2>{editingId && <button type="button" onClick={() => { setEditingId(null); setNamaUsaha(''); setPemilik(''); setDeskripsi(''); setWhatsapp(''); setSelectedFile(null); setFileError(''); setCurrentFotoUrl(''); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="ml-auto text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}
@@ -411,7 +414,9 @@ export default function UmkmPage() {
           </form>
         </div>
 
-      </div>
+      </SortGroup>
+</div>
+</SortGroup>
     </div>
   );
 }

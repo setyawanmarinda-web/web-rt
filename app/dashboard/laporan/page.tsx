@@ -3,6 +3,7 @@
 import React from 'react';
 import { useSimStore } from '@/lib/store';
 import { FileSpreadsheet, Download, Printer, CheckCircle } from 'lucide-react';
+import { SortGroup } from '@/components/LayoutEdit';
 
 export default function LaporanPage() {
   const { kasList, wargaList, selectedRt, getKasSummaryByRt } = useSimStore();
@@ -41,7 +42,8 @@ export default function LaporanPage() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <SortGroup attr="data-lo" storageKey="lo-laporan" className="space-y-8">
+<div data-lo="b1" className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white">Laporan & Ekspor Rekapitulasi Data</h1>
           <p className="text-slate-400 text-sm">Cetak & unduh laporan rekapitulasi keuangan 3 pos & data kependudukan (Format PDF / Excel CSV)</p>
@@ -66,7 +68,7 @@ export default function LaporanPage() {
       </div>
 
       {/* Printable Financial Summary */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+      <div data-lo="b2" className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
         <div className="border-b border-slate-800 pb-4 flex justify-between items-end">
           <div>
             <h2 className="text-xl font-bold text-white">REKAPITULASI KAS & IURAN RT {selectedRt} / RW 012</h2>
@@ -112,6 +114,7 @@ export default function LaporanPage() {
           </div>
         </div>
       </div>
+</SortGroup>
 
     </div>
   );

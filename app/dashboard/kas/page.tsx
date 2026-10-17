@@ -8,7 +8,7 @@ import {
   Wallet, TrendingUp, TrendingDown, Users, PlusCircle, Download,
   HelpCircle, CreditCard, CheckCircle2, ShieldCheck, ArrowUpRight, ArrowDownRight, Tag, ArrowRight, Plus, Trash2, Calendar, Pencil, X
 } from 'lucide-react';
-import KasLayoutEditor from '@/components/KasLayoutEditor';
+import { KasEditProvider, KasEditToggle, KasSortGroup } from '@/components/KasLayoutEditor';
 import DatePickerField from '@/components/DatePickerField';
 import { formatRupiahInput, parseRupiahInput } from '@/lib/currency';
 
@@ -18,7 +18,7 @@ interface PerantaraItem {
   nominal: number;
 }
 
-export default function KasDashboardPage() {
+function KasDashboardContent() {
   const { selectedRt, kasList, wargaList, simpanPinjamList, addKasTransaction, addSimpanPinjamTransaction, updateData, getKasSummaryByRt, deleteData } = useSimStore();
 
   const summary = getKasSummaryByRt(selectedRt);
@@ -322,8 +322,9 @@ export default function KasDashboardPage() {
         </div>
       </div>
 
-      <KasLayoutEditor />
+      <KasEditToggle />
 
+      <KasSortGroup attr="data-kas-block" storageKey="kas-layout-v1">
       {/* Metric Cards */}
       <div data-kas-block="metric">
         <h3 className="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -331,20 +332,21 @@ export default function KasDashboardPage() {
           <span>Rincian Saldo Akumulasi per Pos (RT {selectedRt})</span>
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <div data-kas-card="kasrt" className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">1. Kas RT</span><span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold">Operasional</span></div><div className="text-base sm:text-lg font-bold text-emerald-400 mb-1">Rp {(summary["Kas RT"] || 0).toLocaleString("id-ID")}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Operasional Internal</p></div>
-          <div data-kas-card="sampah" className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">2. Sampah & Keamanan</span><span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">Wajib</span></div><div className="text-base sm:text-lg font-bold text-white mb-1">Rp {(summary["Sampah & Keamanan"] || 0).toLocaleString("id-ID")}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Sampah, Keamanan & kegiatan RW</p></div>
-          <div data-kas-card="dansos" className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">3. Dana Sosial</span><span className="text-[10px] bg-teal-500/20 text-teal-300 px-1.5 py-0.5 rounded font-bold">Dansos</span></div><div className="text-base sm:text-lg font-bold text-white mb-1">Rp {(summary["Dana Sosial"] || 0).toLocaleString("id-ID")}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Sumbangan & Santunan</p></div>
-          <div data-kas-card="simpinjam" className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-amber-500/30 p-4 rounded-xl relative overflow-hidden group hover:border-amber-400/70 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">4. Simpan Pinjam</span><span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">Simpin</span></div><div className="space-y-1"><div className="text-sm font-bold text-emerald-300">Simpanan: Rp {totalSimpanan.toLocaleString("id-ID")}</div><div className="text-sm font-bold text-amber-300">Pinjaman: Rp {totalPinjaman.toLocaleString("id-ID")}</div></div><p className="text-[10px] sm:text-[11px] text-slate-500 mt-2">Saldo berjalan</p></div>
-          <div data-kas-card="dana17" className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-sky-500/30 p-4 rounded-xl relative overflow-hidden group hover:border-sky-400/70 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">5. Dana 17an</span><span className="text-[10px] bg-sky-500/20 text-sky-300 px-1.5 py-0.5 rounded font-bold">17an</span></div><div className="text-base sm:text-lg font-bold text-sky-300 mb-1">Rp {(summary['Dana 17an'] || 0).toLocaleString('id-ID')}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Iuran kegiatan 17an</p></div>
-        </div>
+        <KasSortGroup attr="data-kas-card" storageKey="kas-cards-v1" layout="flow" gap="0.75rem">
+          <div data-kas-card="kasrt" data-lo-w="4" className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">Kas RT</span><span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold">Operasional</span></div><div className="text-base sm:text-lg font-bold text-emerald-400 mb-1">Rp {(summary["Kas RT"] || 0).toLocaleString("id-ID")}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Operasional Internal</p></div>
+          <div data-kas-card="sampah" data-lo-w="4" className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">Sampah & Keamanan</span><span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">Wajib</span></div><div className="text-base sm:text-lg font-bold text-white mb-1">Rp {(summary["Sampah & Keamanan"] || 0).toLocaleString("id-ID")}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Sampah, Keamanan & kegiatan RW</p></div>
+          <div data-kas-card="dansos" data-lo-w="4" className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-slate-800 p-4 rounded-xl relative overflow-hidden group hover:border-emerald-500/50 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">Dana Sosial</span><span className="text-[10px] bg-teal-500/20 text-teal-300 px-1.5 py-0.5 rounded font-bold">Dansos</span></div><div className="text-base sm:text-lg font-bold text-white mb-1">Rp {(summary["Dana Sosial"] || 0).toLocaleString("id-ID")}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Sumbangan & Santunan</p></div>
+          <div data-kas-card="simpinjam" data-lo-w="4" className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-amber-500/30 p-4 rounded-xl relative overflow-hidden group hover:border-amber-400/70 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">Simpan Pinjam</span><span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-bold">Simpin</span></div><div className="space-y-1"><div className="text-sm font-bold text-emerald-300">Simpanan: Rp {totalSimpanan.toLocaleString("id-ID")}</div><div className="text-sm font-bold text-amber-300">Pinjaman: Rp {totalPinjaman.toLocaleString("id-ID")}</div></div><p className="text-[10px] sm:text-[11px] text-slate-500 mt-2">Saldo berjalan</p></div>
+          <div data-kas-card="dana17" data-lo-w="4" className="min-w-[220px] sm:min-w-0 snap-start bg-slate-900/90 border border-sky-500/30 p-4 rounded-xl relative overflow-hidden group hover:border-sky-400/70 transition-all flex-1"><div className="flex items-center justify-between mb-2"><span className="text-xs font-medium text-slate-400">Dana 17an</span><span className="text-[10px] bg-sky-500/20 text-sky-300 px-1.5 py-0.5 rounded font-bold">17an</span></div><div className="text-base sm:text-lg font-bold text-sky-300 mb-1">Rp {(summary['Dana 17an'] || 0).toLocaleString('id-ID')}</div><p className="text-[10px] sm:text-[11px] text-slate-500">Iuran kegiatan 17an</p></div>
+        </KasSortGroup>
       </div>
 
       {/* Top Layout Action Forms */}
-      <div data-kas-block="forms" className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+      <div data-kas-block="forms">
+        <KasSortGroup attr="data-kas-panel" storageKey="kas-panels-v1" layout="flow">
         
         {/* Form Catat Transaksi Keuangan (8 cols) */}
-        <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+        <div data-kas-panel="catat" data-lo-w="8" className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
@@ -620,7 +622,7 @@ export default function KasDashboardPage() {
         </div>
 
         {/* Form Input Transaksi Simpan Pinjam */}
-        <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col justify-between">
+        <div data-kas-panel="simpin-form" data-lo-w="4" className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-800">
               <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
@@ -772,6 +774,7 @@ export default function KasDashboardPage() {
           </div>
         </div>
 
+      </KasSortGroup>
       </div>
 
       {/* Riwayat Mutasi Transaksi */}
@@ -962,6 +965,15 @@ export default function KasDashboardPage() {
         </div>
       </div>
 
+      </KasSortGroup>
     </div>
+  );
+}
+
+export default function KasDashboardPage() {
+  return (
+    <KasEditProvider>
+      <KasDashboardContent />
+    </KasEditProvider>
   );
 }

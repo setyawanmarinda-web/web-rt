@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import DatePickerField from '@/components/DatePickerField';
 import { Package, Plus, RefreshCw, Search, X, History, Minus, Pencil, Trash2 } from 'lucide-react';
 import type { Inventory, InventoryHistory } from '@/lib/types';
+import { SortGroup } from '@/components/LayoutEdit';
 
 export default function InventoryPage() {
   const [items, setItems] = useState<Inventory[]>([]);
@@ -280,7 +281,8 @@ export default function InventoryPage() {
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <SortGroup attr="data-lo" storageKey="lo-inventory" className="space-y-6">
+<div data-lo="b1" className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
@@ -768,8 +770,9 @@ export default function InventoryPage() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+      <div data-lo="b2">
+<SortGroup attr="data-lo-p" storageKey="lo-inventory-b2" layout="flow" gap="1rem">
+        <div data-lo-p="p1" data-lo-w="4" className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Jenis Barang
           </p>
@@ -778,7 +781,7 @@ export default function InventoryPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <div data-lo-p="p2" data-lo-w="4" className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Stok Tersedia
           </p>
@@ -787,7 +790,7 @@ export default function InventoryPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <div data-lo-p="p3" data-lo-w="4" className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Sedang Dipinjam
           </p>
@@ -795,10 +798,11 @@ export default function InventoryPage() {
             {totalBorrowed}
           </p>
         </div>
-      </div>
+      </SortGroup>
+</div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3">
+      <div data-lo="b3" className="flex items-center gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -812,7 +816,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
+      <div data-lo="b4" className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-slate-50 dark:bg-slate-800/60">
@@ -952,6 +956,7 @@ export default function InventoryPage() {
           </table>
         </div>
       </div>
+</SortGroup>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
 import { Megaphone, Plus, BellRing, Trash2, Pencil, X } from 'lucide-react';
+import { SortGroup } from '@/components/LayoutEdit';
 
 export default function PengumumanPage() {
   const { pengumumanList, selectedRt, addPengumuman, updateData, deleteData } = useSimStore();
@@ -44,17 +45,19 @@ export default function PengumumanPage() {
 
   return (
     <div className="space-y-8">
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <SortGroup attr="data-lo" storageKey="lo-pengumuman" className="space-y-8">
+<div data-lo="b1" className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white">Publikasi Pengumuman Warga</h1>
           <p className="text-slate-400 text-sm">Pengumuman penting dengan indikator status Aktif / Ditarsipkan untuk RT {selectedRt}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div data-lo="b2">
+<SortGroup attr="data-lo-p" storageKey="lo-pengumuman-b2" layout="flow" gap="2rem">
         
         {/* List Pengumuman (8 cols) */}
-        <div className="lg:col-span-8 space-y-4">
+        <div data-lo-p="p1" data-lo-w="8" data-lo-s="n" className="lg:col-span-8 space-y-4">
           <h2 className="text-lg font-bold text-white mb-4">Pengumuman Aktif</h2>
           {filtered.map((item) => (
             <div key={item.id} className="bg-slate-900 border border-slate-800 rounded-xl p-5 hover:border-emerald-500/40 transition-all">
@@ -78,7 +81,7 @@ export default function PengumumanPage() {
         </div>
 
         {/* Form Tambah (4 cols) */}
-        <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
+        <div data-lo-p="p2" data-lo-w="4" data-lo-s="n" className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
           <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-bold text-white">{editingId ? 'Edit Pengumuman' : 'Buat Pengumuman Baru'}</h2>{editingId && <button type="button" onClick={() => { setEditingId(null); setJudul(''); setIsi(''); }} className="text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}</div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -127,7 +130,9 @@ export default function PengumumanPage() {
           </form>
         </div>
 
-      </div>
+      </SortGroup>
+</div>
+</SortGroup>
     </div>
   );
 }

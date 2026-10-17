@@ -1,13 +1,33 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Wallet, Users, Calendar, Megaphone, ShoppingBag,
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
+  Wallet, Calendar, Megaphone, ShoppingBag,
   BarChart3, FolderArchive, FileText, FileSpreadsheet, Settings, Package,
-  Shield, X
+  Shield, X, GripVertical
 } from 'lucide-react';
 import { RT_LIST } from '@/lib/types';
+import { LayoutEditBar, sanitizeOrder, useLongPressEdit } from '@/components/LayoutEdit';
+import { useEditing, useResetVersion } from '@/lib/layoutEdit';
 
 interface SidebarProps {
   selectedRt: string;
@@ -16,24 +36,140 @@ interface SidebarProps {
   onMobileClose?: () => void;
 }
 
+const MENU_ITEMS = [
+  { href: '/dashboard/kas', label: 'Kas & Iuran Warga', icon: Wallet },
+  { href: '/dashboard/kegiatan', label: 'Agenda Kegiatan', icon: Calendar },
+  { href: '/dashboard/pengumuman', label: 'Pengumuman', icon: Megaphone },
+  { href: '/dashboard/surat', label: 'Layanan Surat', icon: FileText },
+  { href: '/dashboard/statistik', label: 'Statistik Warga', icon: BarChart3 },
+  { href: '/dashboard/arsip', label: 'Arsip Digital', icon: FolderArchive },
+  { href: '/dashboard/inventory', label: 'Inventory', icon: Package },
+  { href: '/dashboard/umkm', label: 'Direktori UMKM', icon: ShoppingBag },
+  { href: '/dashboard/laporan', label: 'Rekap & Export', icon: FileSpreadsheet },
+  { href: '/dashboard/pengaturan', label: 'Pengaturan System', icon: Settings },
+];
+
+type MenuItem = (typeof MENU_ITEMS)[number];
+
+const DEFAULT_ORDER = MENU_ITEMS.map((m) => m.href);
+const STORAGE_KEY = 'sidebar-menu-v2';
+
+function EditRow({ item, index }: { item: MenuItem; index: number }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: item.href });
+  const Icon = item.icon;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 20 : undefined,
+        position: 'relative',
+      }}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        style={{ animationDelay: `${-index * 0.07}s` }}
+        className={`lo-jiggle touch-none cursor-grab active:cursor-grabbing flex items-center justify-between px-3 py-3 md:py-2.5 rounded-xl md:rounded-lg text-sm font-medium border select-none ${
+          isDragging
+            ? 'bg-slate-800 border-emerald-500 text-white shadow-lg'
+            : 'bg-slate-800/60 border-emerald-500/30 text-slate-200'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <Icon className="w-5 h-5 md:w-4 md:h-4 text-slate-400" />
+          <span>{item.label}</span>
+        </div>
+        <GripVertical className="w-4 h-4 text-emerald-400" />
+      </div>
+    </div>
+  );
+}
+
+function SidebarLink({
+  item,
+  isActive,
+  onClick,
+}: {
+  item: MenuItem;
+  isActive: boolean;
+  onClick?: () => void;
+}) {
+  const lp = useLongPressEdit(true);
+  const Icon = item.icon;
+
+  return (
+    <Link
+      href={item.href}
+      draggable={false}
+      onClick={onClick}
+      {...lp}
+      className={`flex items-center justify-between px-3 py-3 md:py-2.5 rounded-xl md:rounded-lg text-sm font-medium transition-all ${
+        isActive
+          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-inner'
+          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <Icon className={`w-5 h-5 md:w-4 md:h-4 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
+        <span>{item.label}</span>
+      </div>
+    </Link>
+  );
+}
+
 export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
+  const editing = useEditing();
+  const resetVersion = useResetVersion();
+  const seenReset = useRef(resetVersion);
+  const [order, setOrder] = useState<string[]>(DEFAULT_ORDER);
 
-  const menuItems = [
-    { href: '/dashboard/kas', label: 'Kas & Iuran Warga', icon: Wallet, badge: 'Pos Split' },
-    { href: '/dashboard/kegiatan', label: 'Agenda Kegiatan', icon: Calendar },
-    { href: '/dashboard/pengumuman', label: 'Pengumuman', icon: Megaphone },
-    { href: '/dashboard/umkm', label: 'Direktori UMKM', icon: ShoppingBag },
-    { href: '/dashboard/statistik', label: 'Statistik Warga', icon: BarChart3 },
-    { href: '/dashboard/surat', label: 'Layanan Surat', icon: FileText },
-    { href: '/dashboard/arsip', label: 'Arsip Digital', icon: FolderArchive },
-    { href: '/dashboard/laporan', label: 'Rekap & Export', icon: FileSpreadsheet },
-    { href: '/dashboard/inventory', label: 'Inventory', icon: Package },
-    { href: '/dashboard/pengaturan', label: 'Pengaturan System', icon: Settings },
-  ];
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) setOrder(sanitizeOrder(JSON.parse(raw), DEFAULT_ORDER));
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (resetVersion === seenReset.current) return;
+    seenReset.current = resetVersion;
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+    setOrder(DEFAULT_ORDER);
+  }, [resetVersion]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const from = order.indexOf(String(active.id));
+    const to = order.indexOf(String(over.id));
+    if (from < 0 || to < 0) return;
+    const next = arrayMove(order, from, to);
+    setOrder(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {}
+  }
+
+  const menuItems = order
+    .map((href) => MENU_ITEMS.find((m) => m.href === href))
+    .filter((m): m is MenuItem => Boolean(m));
 
   return (
     <>
+      <LayoutEditBar />
+
       {/* Mobile Backdrop Overlay */}
       {isMobileOpen && (
         <div
@@ -88,32 +224,31 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
 
         {/* Menu List */}
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onMobileClose}
-                className={`flex items-center justify-between px-3 py-3 md:py-2.5 rounded-xl md:rounded-lg text-sm font-medium transition-all ${
-                  isActive
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-inner'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-5 h-5 md:w-4 md:h-4 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
-                  <span>{item.label}</span>
+          {editing ? (
+            <DndContext
+              id="sidebar-menu"
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={onDragEnd}
+            >
+              <SortableContext items={order} strategy={verticalListSortingStrategy}>
+                <div className="space-y-1">
+                  {menuItems.map((item, index) => (
+                    <EditRow key={item.href} item={item} index={index} />
+                  ))}
                 </div>
-                {item.badge && (
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-semibold border border-emerald-500/20">
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+              </SortableContext>
+            </DndContext>
+          ) : (
+            menuItems.map((item) => (
+              <SidebarLink
+                key={item.href}
+                item={item}
+                isActive={pathname === item.href}
+                onClick={onMobileClose}
+              />
+            ))
+          )}
         </div>
 
         {/* Footer Profile Info */}

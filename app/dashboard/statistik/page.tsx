@@ -10,6 +10,7 @@ import { RT_LIST, Warga } from '@/lib/types';
 import { getAge, getWargaAgeCategory } from '@/lib/wargaUtils';
 import { formatRupiahInput, parseRupiahInput } from '@/lib/currency';
 import { Users, BarChart2, UserPlus, CheckCircle2, Calendar, MapPin, Trash2, Pencil, X, Download, Upload, FileSpreadsheet } from 'lucide-react';
+import { SortGroup } from '@/components/LayoutEdit';
 
 type PreviewRow = {
   nomor: string;
@@ -994,7 +995,8 @@ export default function StatistikPage() {
       ) : null}
 
       {/* Header */}
-      <div className="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <SortGroup attr="data-lo" storageKey="lo-statistik" className="space-y-6 sm:space-y-8">
+<div data-lo="b1" className="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-white">Statistik & Demografi Kependudukan</h1>
           <p className="text-slate-400 text-xs sm:text-sm">Pendataan warga dengan NIK, tanggal lahir, alamat rumah & RT 001 - 010</p>
@@ -1007,8 +1009,9 @@ export default function StatistikPage() {
       </div>
 
       {/* Metric Visual Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+      <div data-lo="b2">
+<SortGroup attr="data-lo-p" storageKey="lo-statistik-b2" layout="flow" gap="1rem">
+        <div data-lo-p="p1" data-lo-w="3" className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
           <span className="text-xs font-semibold text-slate-400 block uppercase mb-1">Total Terdata</span>
           <div className="text-3xl font-extrabold text-white mb-2">{totalWarga} <span className="text-sm font-normal text-slate-500">Warga</span></div>
           <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -1016,7 +1019,7 @@ export default function StatistikPage() {
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+        <div data-lo-p="p2" data-lo-w="3" className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
           <span className="text-xs font-semibold text-slate-400 block uppercase mb-1">Warga Tetap</span>
           <div className="text-3xl font-extrabold text-teal-400 mb-2">{wargaTetap} <span className="text-sm font-normal text-slate-500">KK</span></div>
           <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -1025,7 +1028,7 @@ export default function StatistikPage() {
           <span className="text-[11px] text-slate-400 mt-1 block">{totalWarga ? Math.round((wargaTetap/totalWarga)*100) : 0}% dari populasi</span>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+        <div data-lo-p="p3" data-lo-w="3" className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
           <span className="text-xs font-semibold text-slate-400 block uppercase mb-1">Warga Kontrak / Sewa</span>
           <div className="text-3xl font-extrabold text-purple-400 mb-2">{wargaKontrak} <span className="text-sm font-normal text-slate-500">KK</span></div>
           <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
@@ -1034,38 +1037,42 @@ export default function StatistikPage() {
           <span className="text-[11px] text-slate-400 mt-1 block">{totalWarga ? Math.round((wargaKontrak/totalWarga)*100) : 0}% dari populasi</span>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+        <div data-lo-p="p4" data-lo-w="3" className="bg-slate-900 border border-slate-800 p-5 rounded-xl">
           <span className="text-xs font-semibold text-slate-400 block uppercase mb-1">Kategori Lansia</span>
           <div className="text-3xl font-extrabold text-amber-400 mb-2">{lansiaCount} <span className="text-sm font-normal text-slate-500">Lansia</span></div>
           <p className="text-[11px] text-slate-400">Penerima Potongan Pos Iuran</p>
         </div>
-      </div>
+      </SortGroup>
+</div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <div data-lo="b3">
+<SortGroup attr="data-lo-p" storageKey="lo-statistik-b3" layout="flow" gap="0.75rem" mobile2>
+        <div data-lo-p="p1" data-lo-w="3" className="bg-slate-900 border border-slate-800 rounded-xl p-4">
           <div className="text-[10px] uppercase tracking-wide text-slate-400">Balita</div>
           <div className="text-2xl font-black text-white mt-1">{usiaSummary.Balita}</div>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div data-lo-p="p2" data-lo-w="3" className="bg-slate-900 border border-slate-800 rounded-xl p-4">
           <div className="text-[10px] uppercase tracking-wide text-slate-400">Anak</div>
           <div className="text-2xl font-black text-white mt-1">{usiaSummary.Anak}</div>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div data-lo-p="p3" data-lo-w="3" className="bg-slate-900 border border-slate-800 rounded-xl p-4">
           <div className="text-[10px] uppercase tracking-wide text-slate-400">Remaja</div>
           <div className="text-2xl font-black text-white mt-1">{usiaSummary.Remaja}</div>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <div data-lo-p="p4" data-lo-w="3" className="bg-slate-900 border border-slate-800 rounded-xl p-4">
           <div className="text-[10px] uppercase tracking-wide text-slate-400">Dewasa</div>
           <div className="text-2xl font-black text-white mt-1">{usiaSummary.Dewasa}</div>
         </div>
-      </div>
+      </SortGroup>
+</div>
 
-      <BirthdayNotifications wargaList={filteredWarga} />
+      <BirthdayNotifications data-lo="b4" wargaList={filteredWarga} />
 
       {/* Grid Content: Registration & Table */}
-      <div className="space-y-6 lg:space-y-8">
+      <div data-lo="b5">
+<SortGroup attr="data-lo-p" storageKey="lo-statistik-b5" layout="stack" className="space-y-6 lg:space-y-8">
         {/* Input Form Warga */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+        <div data-lo-p="p1" className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
           <div className="flex items-center gap-3 mb-5 pb-4 border-b border-slate-800">
             <UserPlus className="w-5 h-5 text-emerald-400" />
             <h2 className="text-base sm:text-lg font-bold text-white">{editingId ? 'Edit Data Warga' : 'Input Warga Baru'}</h2>{editingId && <button type="button" onClick={() => { setEditingId(null); setNama(''); setTanggalLahir(''); setAlamat(''); }} className="ml-auto text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}
@@ -1175,7 +1182,7 @@ export default function StatistikPage() {
         </div>
 
         {/* Table Warga */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+        <div data-lo-p="p2" className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
           <div className="mb-4 flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-base sm:text-lg font-bold text-white">Daftar Warga Terdaftar (RT {selectedRt})</h2>
             <div className="flex flex-wrap items-center gap-2">
@@ -1292,7 +1299,9 @@ export default function StatistikPage() {
             </table>
           </div>
         </div>
-      </div>
+      </SortGroup>
+</div>
+</SortGroup>
 
     </div>
   );

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
 import DatePickerField from '@/components/DatePickerField';
 import { FileText, Clock, CheckCircle2, AlertCircle, Plus, Calendar, Trash2, Pencil, X } from 'lucide-react';
+import { SortGroup } from '@/components/LayoutEdit';
 
 export default function SuratPage() {
   const { suratList, selectedRt, addSurat, updateData, updateSuratStatus, deleteData } = useSimStore();
@@ -46,17 +47,19 @@ export default function SuratPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <SortGroup attr="data-lo" storageKey="lo-surat" className="space-y-6 sm:space-y-8">
+<div data-lo="b1" className="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-white">Layanan Surat Pengantar Warga</h1>
           <p className="text-slate-400 text-xs sm:text-sm">Pengajuan & verifikasi Surat Pengantar KTP, SKTM, & Domisili (Tanpa NIK, Tanggal Lahir otomatis)</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+      <div data-lo="b2">
+<SortGroup attr="data-lo-p" storageKey="lo-surat-b2" layout="flow" gap="1.5rem">
         
         {/* List Permohonan Surat (8 cols) */}
-        <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
+        <div data-lo-p="p1" data-lo-w="8" data-lo-s="n" className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
           <h2 className="text-base sm:text-lg font-bold text-white mb-4">Daftar Pengajuan Surat</h2>
 
           <div className="space-y-3">
@@ -102,7 +105,7 @@ export default function SuratPage() {
         </div>
 
         {/* Form Ajukan Surat (4 cols) */}
-        <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl h-fit">
+        <div data-lo-p="p2" data-lo-w="4" data-lo-s="n" className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl h-fit">
           <div className="flex items-center justify-between mb-4"><h2 className="text-base sm:text-lg font-bold text-white">{editingId ? 'Edit Pengajuan Surat' : 'Buat Pengajuan Surat Baru'}</h2>{editingId && <button type="button" onClick={() => { setEditingId(null); setNamaPemohon(''); setTanggalLahir(''); setKeperluan(''); }} className="text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}</div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -159,7 +162,9 @@ export default function SuratPage() {
           </form>
         </div>
 
-      </div>
+      </SortGroup>
+</div>
+</SortGroup>
     </div>
   );
 }
