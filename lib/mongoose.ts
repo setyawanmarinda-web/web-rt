@@ -46,6 +46,11 @@ const WargaSchema = new Schema({
     type: String,
   },
 
+  no_kk: { type: String, trim: true, default: '' },
+  hubungan: { type: String, trim: true, default: '' },
+  ikut_iuran_kk: { type: Boolean, default: false },
+  anggota_simpin: { type: Boolean, default: false },
+
   nominal_iuran: {
     type: Number,
     min: 0,

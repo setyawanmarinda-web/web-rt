@@ -8,6 +8,10 @@ export interface Warga {
   rw: string;
   no_hp?: string;
   nominal_iuran?: number;
+  no_kk?: string;
+  hubungan?: string;
+  ikut_iuran_kk?: boolean;
+  anggota_simpin?: boolean;
   alamat: string;
   created_at: string;
 }

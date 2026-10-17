@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
+import { planWargaImport, pickCol, type ImportItem, type ImportRecord } from '@/lib/wargaImport';
 import { useSimStore } from '@/lib/store';
 import DatePickerField from '@/components/DatePickerField';
 import BirthdayNotifications from '@/components/BirthdayNotifications';
@@ -157,7 +158,8 @@ export default function StatistikPage() {
   const [statusTinggal, setStatusTinggal] = useState<'Tetap' | 'Kontrak'>('Tetap');
   const [nominalIuran, setNominalIuran] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
-  const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
+  const [previewRows, setPreviewRows] = useState<ImportItem[]>([]);
+  const [importSkipped, setImportSkipped] = useState(0);
   const [failedImportRows, setFailedImportRows] = useState<Array<{ rowNumber: number; reason: string; row: Record<string, string> }>>([]);
   const [showFamilyModal, setShowFamilyModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -303,54 +305,84 @@ export default function StatistikPage() {
     }
   };
 
+  const IMPORT_HEADERS = ['ID', 'Nomor', 'Alamat', 'Nama Lengkap', 'NIK', 'Tanggal Lahir', 'Usia', 'Kategori Usia', 'RT/RW', 'Status', 'Tarif Iuran Wajib', 'No KK', 'Hubungan', 'Ikut Iuran KK', 'Anggota Simpin'];
+
   const handleDownloadTemplate = () => {
     const today = new Date();
     const rows = [
-      ['1', 'AM19 No. 5', 'Budi', '', new Date(1980, 4, 10), '', '', '002/012', 'Tetap', 55000],
-      ['1', 'AM19 No. 5', 'Siti', '', new Date(1985, 7, 15), '', '', '002/012', 'Tetap', 55000],
-      ['1', 'AM19 No. 5', 'Andi', '', new Date(2010, 0, 20), '', '', '002/012', 'Tetap', 0],
-      ['2', 'AM20 No. 8', 'Rudi', '', today, '', '', '002/012', 'Tetap', 55000],
+      ['', '1', 'AM19 No. 5', 'Budi', '', new Date(1980, 4, 10), '', '', '002/012', 'Tetap', '', '', 'Kepala Keluarga', '', ''],
+      ['', '1', 'AM19 No. 5', 'Siti', '', new Date(1985, 7, 15), '', '', '002/012', 'Tetap', '', '', 'Istri', '', ''],
+      ['', '1', 'AM19 No. 5', 'Andi', '', new Date(2010, 0, 20), '', '', '002/012', 'Tetap', '', '', 'Anak', '', ''],
+      ['', '1', 'AM19 No. 5', 'Joko', '', new Date(1988, 2, 3), '', '', '002/012', 'Tetap', '', 'KK-2', 'Kepala Keluarga', 'Ya', ''],
+      ['', '1', 'AM19 No. 5', 'Rina', '', new Date(1990, 5, 9), '', '', '002/012', 'Tetap', '', 'KK-2', 'Istri', '', ''],
+      ['', '2', 'AM20 No. 8', 'Rudi', '', today, '', '', '002/012', 'Tetap', '', '', 'Kepala Keluarga', '', 'Ya'],
     ];
 
-    const ws = XLSX.utils.aoa_to_sheet([HOUSEHOLD_HEADERS, ...rows]);
-    formatExcelColumns(ws, 4, 3);
+    const ws = XLSX.utils.aoa_to_sheet([IMPORT_HEADERS, ...rows]);
+    formatExcelColumns(ws, 5, 4);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template Warga');
     const instructions = XLSX.utils.aoa_to_sheet([
       ['PETUNJUK PENGISIAN'],
-      ['Tanggal Lahir', 'Gunakan format dd mmmm yyyy. Untuk tanggal hari ini, pilih sel lalu tekan Ctrl+;'],
+      ['Satu baris', 'Satu baris = satu orang. Alamat yang sama boleh dipakai banyak orang.'],
+      ['ID', 'Kosongkan untuk orang baru. Untuk edit data orang lama, pakai file hasil Export dan JANGAN hapus isi kolom ID (dengan ID, NIK pun bisa diubah).'],
+      ['Tambah anggota / KK baru', 'Tambah baris baru (boleh di paling bawah), kolom ID kosong, Nomor dan Alamat sama persis dengan rumahnya.'],
+      ['No KK', 'Kosong = KK pertama di alamat itu. KK kedua dst WAJIB diisi (nomor KK atau label, contoh KK-2) dan sama untuk semua anggota KK itu. Isi tanda - untuk mengosongkan.'],
+      ['Hubungan', 'Kepala Keluarga / Istri / Anak / Lainnya. Tarif otomatis dipasang di Kepala Keluarga.'],
+      ['Ikut Iuran KK', 'Ya jika KK kedua ikut iuran Dana Sosial + Kas RT (27.000). Cukup diisi di baris Kepala Keluarga KK itu.'],
+      ['Anggota Simpin', 'Ya jika ikut keanggotaan Simpan Pinjam. Pencatatan setoran tetap lewat menu Kas & Iuran.'],
+      ['Tarif Iuran Wajib', 'Boleh dikosongkan untuk orang baru: sistem isi 55.000 per alamat (KK pertama) atau 27.000 untuk KK tambahan yang Ikut Iuran. Kalau diisi, angkanya dipakai apa adanya.'],
       ['NIK', 'Format teks, wajib tepat 16 digit angka. Jangan gunakan tanda +, spasi, titik, atau huruf.'],
-      ['Tarif Iuran Wajib', 'Isi angka saja. Tampilan akan memakai pemisah ribuan, contoh 55.000 atau 1.000.000.'],
+      ['Tanggal Lahir', 'Gunakan format dd mmmm yyyy. Untuk tanggal hari ini, pilih sel lalu tekan Ctrl+;'],
       ['Status', 'Isi Tetap atau Kontrak.'],
+      ['Catatan', 'Import tidak pernah menghapus data. Baris yang dibuang dari file tidak menghapus warga di database.'],
     ]);
-    instructions['!cols'] = [{ wch: 20 }, { wch: 100 }];
+    instructions['!cols'] = [{ wch: 24 }, { wch: 110 }];
     XLSX.utils.book_append_sheet(wb, instructions, 'Petunjuk');
     XLSX.writeFile(wb, 'template_warga_rw012.xlsx');
   };
 
   const handleExportExcel = () => {
     const rows = buildExportRows(filteredWarga, getWargaFinance);
+    const byNik = new Map<string, (typeof filteredWarga)[number]>();
+    const byNameAlamat = new Map<string, (typeof filteredWarga)[number]>();
+    filteredWarga.forEach((w) => {
+      const nikDigits = String(w.nik ?? '').replace(/\D/g, '');
+      if (nikDigits) byNik.set(nikDigits, w);
+      byNameAlamat.set(`${String(w.nama_lengkap ?? '').trim().toLowerCase()}|${String(w.alamat ?? '').trim().toLowerCase()}`, w);
+    });
+
     const worksheetData = [
-      ['Nomor', 'Alamat', 'Nama Lengkap', 'NIK', 'Tanggal Lahir', 'Usia', 'Kategori Usia', 'RT/RW', 'Status', 'Tarif Iuran Wajib', 'Saldo Simpanan', 'Saldo Pinjaman', 'Iuran Masuk', 'Iuran 17an'],
-      ...rows.map((row) => [
-        row.Nomor,
-        row.Alamat,
-        row['Nama Lengkap'],
-        String(row.NIK ?? ''),
-        row['Tanggal Lahir'] ? toExcelDate(row['Tanggal Lahir']) : '',
-        row.Usia,
-        row['Kategori Usia'],
-        row['RT/RW'],
-        row.Status,
-        row['Tarif Iuran Wajib'],
-        row.saldoSimpanan,
-        row.saldoPinjaman,
-        row.iuran,
-        row.iuran17an,
-      ]),
+      [...IMPORT_HEADERS, 'Saldo Simpanan', 'Saldo Pinjaman', 'Iuran Masuk', 'Iuran 17an'],
+      ...rows.map((row) => {
+        const nikDigits = String(row.NIK ?? '').replace(/\D/g, '');
+        const w = (nikDigits ? byNik.get(nikDigits) : undefined)
+          ?? byNameAlamat.get(`${String(row['Nama Lengkap'] ?? '').trim().toLowerCase()}|${String(row.Alamat ?? '').trim().toLowerCase()}`);
+        return [
+          w?.id ?? '',
+          row.Nomor,
+          row.Alamat,
+          row['Nama Lengkap'],
+          String(row.NIK ?? ''),
+          row['Tanggal Lahir'] ? toExcelDate(String(row['Tanggal Lahir'])) : '',
+          row.Usia,
+          row['Kategori Usia'],
+          row['RT/RW'],
+          row.Status,
+          row['Tarif Iuran Wajib'],
+          w?.no_kk ?? '',
+          w?.hubungan ?? '',
+          w?.ikut_iuran_kk ? 'Ya' : '',
+          w?.anggota_simpin ? 'Ya' : '',
+          row.saldoSimpanan,
+          row.saldoPinjaman,
+          row.iuran,
+          row.iuran17an,
+        ];
+      }),
     ];
     const ws = XLSX.utils.aoa_to_sheet(worksheetData);
-    formatExcelColumns(ws, 4, 3);
+    formatExcelColumns(ws, 5, 4);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Daftar Warga');
     XLSX.writeFile(wb, `daftar_warga_rt${selectedRt === 'ALL' ? 'semua' : selectedRt}.xlsx`);
@@ -377,120 +409,47 @@ export default function StatistikPage() {
     if (!hasColumns) {
       setFailedImportRows([{ rowNumber: 1, reason: 'Format Excel tidak sesuai. Pastikan kolom: Nomor, Alamat, Nama Lengkap, NIK, Tanggal Lahir, Usia, Kategori Usia, RT/RW, Status.', row: {} }]);
       setPreviewRows([]);
+      setImportSkipped(0);
       return;
     }
 
-    const existingNiks = new Set(wargaList.map((w) => String(w.nik || '').replace(/\D/g, '')));
-    const existingNames = new Set(wargaList.map((w) => normalizePersonText(w.nama_lengkap)));
-    const addressNomorMap = new Map<string, string>();
-    const validRows: PreviewRow[] = [];
-    const failedRows: Array<{ rowNumber: number; reason: string; row: Record<string, string> }> = [];
+    const records: ImportRecord[] = normalizedRows.map(({ row, rowIndex, rawValues }) => ({
+      rowNumber: rowIndex + 2,
+      raw: row,
+      id: pickCol(row, ['id']),
+      nomor: normalizeCell(row['nomor']),
+      alamat: normalizeCell(row['alamat']),
+      nama: normalizeCell(row['nama lengkap']),
+      nik: normalizeCell(row['nik']),
+      tanggalLahir: normalizeExcelDate(rawValues['tanggal lahir'] ?? row['tanggal lahir']),
+      usiaRaw: normalizeCell(row['usia']),
+      kategoriRaw: normalizeCell(row['kategori usia']),
+      rtRwRaw: normalizeCell(row['rt/rw']),
+      statusRaw: normalizeCell(row['status']),
+      tarifRaw: normalizeCell(row['tarif iuran wajib'] ?? row['nominal iuran']),
+      noKk: pickCol(row, ['no kk', 'nokk']),
+      hubungan: pickCol(row, ['hubungan']),
+      ikutKkRaw: pickCol(row, ['ikut iuran kk']),
+      simpinRaw: pickCol(row, ['anggota simpin']),
+    }));
 
-    normalizedRows.forEach(({ row, rowIndex, rawValues }) => {
-      const rowNumber = rowIndex + 2;
-      const nomor = normalizeCell(row['nomor']);
-      const alamat = normalizeCell(row['alamat']);
-      const nama = normalizeCell(row['nama lengkap']);
-      const nik = normalizeCell(row['nik']);
-      const tanggalLahir = normalizeExcelDate(rawValues['tanggal lahir'] ?? row['tanggal lahir']);
-      const usiaRaw = normalizeCell(row['usia']);
-      const kategoriRaw = normalizeCell(row['kategori usia']);
-      const rtRwRaw = normalizeCell(row['rt/rw']);
-      const statusRaw = normalizeCell(row['status']);
-      const nominalIuranRaw = normalizeCell(row['tarif iuran wajib'] ?? row['nominal iuran']);
-      const nominalIuran = nominalIuranRaw ? parseRupiahInput(nominalIuranRaw) : 0;
-
-      if (!alamat || !nama) {
-        failedRows.push({ rowNumber, reason: 'Alamat dan Nama Lengkap wajib diisi.', row });
-        return;
-      }
-
-      const normalizedNama = normalizePersonText(nama);
-      if (existingNames.has(normalizedNama)) {
-        failedRows.push({ rowNumber, reason: 'Nama Lengkap sudah ada di database atau pada baris import sebelumnya.', row });
-        return;
-      }
-
-      if (!/^\d{16}$/.test(nik)) {
-        failedRows.push({ rowNumber, reason: 'NIK wajib tepat 16 digit angka.', row });
-        return;
-      }
-
-      if (existingNiks.has(nik)) {
-        failedRows.push({ rowNumber, reason: 'NIK sudah ada di database.', row });
-        return;
-      }
-
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggalLahir)) {
-        failedRows.push({ rowNumber, reason: 'Format tanggal lahir tidak valid.', row });
-        return;
-      }
-
-      const normalizedDate = tanggalLahir;
-
-      const date = new Date(`${normalizedDate}T00:00:00`);
-      if (Number.isNaN(date.getTime())) {
-        failedRows.push({ rowNumber, reason: 'Tanggal lahir tidak valid.', row });
-        return;
-      }
-
-      const age = getAge(normalizedDate);
-      const expectedCategory = age === null ? null : getWargaAgeCategory({ tanggal_lahir: normalizedDate });
-      const computedCategory = expectedCategory ? String(expectedCategory) : '';
-      const calculatedAge = age === null ? '' : String(age);
-
-      if (usiaRaw && usiaRaw !== calculatedAge) {
-        failedRows.push({ rowNumber, reason: `Usia tidak sesuai dengan tanggal lahir. Harus ${calculatedAge}.`, row });
-        return;
-      }
-
-      if (kategoriRaw && kategoriRaw.toLowerCase() !== computedCategory.toLowerCase()) {
-        failedRows.push({ rowNumber, reason: `Kategori usia tidak sesuai dengan tanggal lahir. Harus ${computedCategory}.`, row });
-        return;
-      }
-
-      const { rt, rw } = parseRtRw(rtRwRaw, selectedRt === 'ALL' ? '002' : selectedRt);
-      const normalizedStatus = statusRaw.toLowerCase() === 'tetap' ? 'Tetap' : statusRaw.toLowerCase() === 'kontrak' ? 'Kontrak' : '';
-      if (!normalizedStatus) {
-        failedRows.push({ rowNumber, reason: 'Status harus Tetap atau Kontrak.', row });
-        return;
-      }
-
-      if (nominalIuranRaw && !/^\d[\d.]*$/.test(nominalIuranRaw)) {
-        failedRows.push({ rowNumber, reason: 'Tarif Iuran Wajib harus berupa angka dengan pemisah titik ribuan.', row });
-        return;
-      }
-
-      const previousNumber = addressNomorMap.get(alamat);
-      if (previousNumber && previousNumber !== nomor) {
-        failedRows.push({ rowNumber, reason: `Alamat "${alamat}" memiliki Nomor yang berbeda di baris lain. Satu alamat harus satu nomor rumah.`, row });
-        return;
-      }
-
-      if (!nomor) {
-        failedRows.push({ rowNumber, reason: 'Nomor rumah wajib diisi.', row });
-        return;
-      }
-
-      addressNomorMap.set(alamat, nomor);
-      existingNiks.add(nik);
-      existingNames.add(normalizedNama);
-      validRows.push({
-        nomor,
-        alamat,
-        nama_lengkap: nama,
-        nik,
-        tanggal_lahir: normalizedDate,
-        usia: calculatedAge,
-        kategori_usia: computedCategory,
-        rt_rw: `${rt}/${rw}`,
-        status: normalizedStatus,
-        nominal_iuran: nominalIuran,
-      });
+    const plan = planWargaImport(records, wargaList, {
+      getAge: (d) => getAge(d),
+      getCategory: (d) => String(getWargaAgeCategory({ tanggal_lahir: d }) ?? ''),
+      parseRtRw: (raw, fallbackRt) => parseRtRw(raw, fallbackRt),
+      parseRupiah: (raw) => parseRupiahInput(raw),
+      normalizeName: (s) => normalizePersonText(s),
+      defaultRt: selectedRt === 'ALL' ? '002' : selectedRt,
     });
 
-    setPreviewRows(validRows);
-    setFailedImportRows(failedRows);
+    setPreviewRows(plan.items);
+    setFailedImportRows(plan.failed);
+    setImportSkipped(plan.skipped);
+
+    if (!plan.items.length && !plan.failed.length) {
+      setToast(plan.skipped ? `Tidak ada perubahan: ${plan.skipped} baris sama dengan data di database.` : 'File tidak berisi baris data.');
+      setTimeout(() => setToast(null), 3500);
+    }
   };
 
   const handleImportFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -503,30 +462,50 @@ export default function StatistikPage() {
   const handleImportConfirmed = async () => {
     if (!previewRows.length) return;
 
-    try {
-      for (const row of previewRows) {
-        const { rt, rw } = parseRtRw(row.rt_rw, selectedRt === 'ALL' ? '002' : selectedRt);
-        await addWarga({
-          nama_lengkap: row.nama_lengkap,
-          nik: row.nik,
-          tanggal_lahir: row.tanggal_lahir,
-          alamat: row.alamat,
-          status_tinggal: row.status === 'Tetap' ? 'Tetap' : 'Kontrak',
-          rt,
-          rw,
-          nominal_iuran: row.nominal_iuran,
+    let berhasil = 0;
+    const gagalItems: ImportItem[] = [];
+    const gagalRows: Array<{ rowNumber: number; reason: string; row: Record<string, string> }> = [];
+
+    for (const item of previewRows) {
+      try {
+        if (item.kind === 'tambah') {
+          await addWarga({
+            nama_lengkap: item.nama,
+            nik: item.nik,
+            tanggal_lahir: item.tanggal_lahir,
+            alamat: item.alamat,
+            status_tinggal: item.status,
+            rt: item.rt,
+            rw: item.rw,
+            nominal_iuran: item.nominal_iuran,
+            no_kk: item.no_kk,
+            hubungan: item.hubungan,
+            ikut_iuran_kk: item.ikut_iuran_kk,
+            anggota_simpin: item.anggota_simpin,
+          });
+        } else if (item.id && item.changes) {
+          await updateData('warga', item.id, item.changes);
+        }
+        berhasil += 1;
+      } catch (error) {
+        console.error('[IMPORT WARGA]', error);
+        gagalItems.push(item);
+        gagalRows.push({
+          rowNumber: item.rowNumber,
+          reason: error instanceof Error ? error.message : 'Gagal menyimpan ke database.',
+          row: {},
         });
       }
-
-      setToast(`Berhasil mengimpor ${previewRows.length} data warga.`);
-      setTimeout(() => setToast(null), 3000);
-      setPreviewRows([]);
-      setFailedImportRows([]);
-    } catch (error) {
-      console.error('[IMPORT WARGA]', error);
-      setToast('Gagal mengimpor data warga.');
-      setTimeout(() => setToast(null), 3000);
     }
+
+    setPreviewRows(gagalItems);
+    setFailedImportRows(gagalRows);
+    setToast(
+      gagalItems.length
+        ? `${berhasil} berhasil, ${gagalItems.length} gagal. Cek daftar di preview.`
+        : `Import selesai: ${berhasil} data warga diproses.`,
+    );
+    setTimeout(() => setToast(null), 3500);
   };
 
   const openFamilyModal = (address: string, nomor: number) => {
@@ -925,7 +904,9 @@ export default function StatistikPage() {
 
             <div className="max-h-[65vh] space-y-4 overflow-y-auto p-5">
               <div className="flex flex-wrap gap-3 text-xs font-semibold">
-                <span className="rounded-lg bg-emerald-500/10 px-3 py-2 text-emerald-300">Siap diimpor: {previewRows.length}</span>
+                <span className="rounded-lg bg-emerald-500/10 px-3 py-2 text-emerald-300">Ditambah: {previewRows.filter((r) => r.kind === 'tambah').length}</span>
+                <span className="rounded-lg bg-sky-500/10 px-3 py-2 text-sky-300">Diperbarui: {previewRows.filter((r) => r.kind === 'perbarui').length}</span>
+                <span className="rounded-lg bg-slate-700/40 px-3 py-2 text-slate-300">Tidak berubah: {importSkipped}</span>
                 <span className="rounded-lg bg-rose-500/10 px-3 py-2 text-rose-300">Gagal validasi: {failedImportRows.length}</span>
               </div>
 
@@ -934,25 +915,41 @@ export default function StatistikPage() {
                   <table className="w-full text-left text-xs text-slate-300">
                     <thead className="bg-slate-950 text-slate-400">
                       <tr>
-                        <th className="px-3 py-2">No.</th>
+                        <th className="px-3 py-2">Aksi</th>
                         <th className="px-3 py-2">Nama</th>
                         <th className="px-3 py-2">NIK</th>
                         <th className="px-3 py-2">Alamat</th>
-                        <th className="px-3 py-2">Tanggal Lahir</th>
-                        <th className="px-3 py-2">RT/RW</th>
-                        <th className="px-3 py-2">Status</th>
+                        <th className="px-3 py-2">KK / Hubungan</th>
+                        <th className="px-3 py-2">Tarif</th>
+                        <th className="px-3 py-2">Perubahan / Catatan</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                      {previewRows.map((row, index) => (
-                        <tr key={`${row.nik}-${index}`}>
-                          <td className="px-3 py-2">{row.nomor}</td>
-                          <td className="px-3 py-2 font-semibold text-white">{row.nama_lengkap}</td>
+                      {previewRows.map((row) => (
+                        <tr key={`${row.rowNumber}-${row.nik}`} className="align-top">
+                          <td className="px-3 py-2">
+                            <span className={`rounded-md border px-2 py-0.5 text-[11px] font-bold ${row.kind === 'tambah' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-sky-500/30 bg-sky-500/10 text-sky-300'}`}>
+                              {row.kind === 'tambah' ? 'Tambah' : 'Perbarui'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 font-semibold text-white">{row.nama}</td>
                           <td className="px-3 py-2 font-mono">{row.nik}</td>
                           <td className="px-3 py-2">{row.alamat}</td>
-                          <td className="px-3 py-2">{row.tanggal_lahir}</td>
-                          <td className="px-3 py-2">{row.rt_rw}</td>
-                          <td className="px-3 py-2">{row.status}</td>
+                          <td className="px-3 py-2">{row.no_kk || 'KK utama'}{row.hubungan ? ` · ${row.hubungan}` : ''}</td>
+                          <td className="px-3 py-2 whitespace-nowrap">Rp {row.nominal_iuran.toLocaleString('id-ID')}{row.tarifAuto ? ' (otomatis)' : ''}</td>
+                          <td className="space-y-1 px-3 py-2">
+                            {row.changeLabels.map((label) => (
+                              <div key={label}>{label}</div>
+                            ))}
+                            {row.kind === 'tambah' && (row.ikut_iuran_kk || row.anggota_simpin) && (
+                              <div className="text-slate-400">
+                                {row.ikut_iuran_kk ? 'Ikut iuran KK' : ''}{row.ikut_iuran_kk && row.anggota_simpin ? ' · ' : ''}{row.anggota_simpin ? 'Anggota Simpin' : ''}
+                              </div>
+                            )}
+                            {row.warnings.map((warning) => (
+                              <div key={warning} className="text-amber-300">⚠ {warning}</div>
+                            ))}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -989,7 +986,7 @@ export default function StatistikPage() {
                 disabled={!previewRows.length}
                 className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Import {previewRows.length} Data Valid
+                Konfirmasi Import ({previewRows.length})
               </button>
             </div>
           </div>

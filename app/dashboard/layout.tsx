@@ -5,6 +5,8 @@ import Sidebar from '@/components/Sidebar';
 import { useSimStore } from '@/lib/store';
 import Link from 'next/link';
 import { ArrowLeft, Bell, Search, Menu } from 'lucide-react';
+import LogoutButton from '@/components/LogoutButton';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function DashboardLayout({
   children,
@@ -85,6 +87,8 @@ export default function DashboardLayout({
               />
             </div>
             
+            <ThemeToggle />
+            <LogoutButton />
             <button className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-all relative">
               <Bell className="w-4 h-4" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
