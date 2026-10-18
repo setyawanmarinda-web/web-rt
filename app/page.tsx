@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { useStatistikRingkas, ringkasUntuk } from '@/lib/useStatistikRingkas';
-import { useScope } from '@/lib/scope';
+import StatistikPanel from '@/components/StatistikPanel';
 import {
   ShieldCheck, ShoppingBag, Megaphone, Calendar, FileText, ArrowRight,
   Users, Sparkles, MessageCircle, Trophy, FolderArchive, FileSpreadsheet, Package,
@@ -13,23 +12,7 @@ import {
 
 type Icon = React.ComponentType<{ className?: string }>;
 
-const HIGHLIGHTS: { scope?: 'rt' | 'rw'; href: string; title: string; desc: string; icon: Icon; iconBox: string }[] = [
-  {
-    scope: 'rt',
-    href: '/dashboard/statistik',
-    title: 'Statistik & Kependudukan',
-    desc: 'Pendataan warga terintegrasi NIK, status tinggal (Tetap / Kontrak), serta grafik demografi kependudukan RT.',
-    icon: Users,
-    iconBox: 'bg-teal-500/10 border-teal-500/20 text-teal-400',
-  },
-  {
-    scope: 'rw',
-    href: '/dashboard/statistik',
-    title: 'Statistik & Kependudukan',
-    desc: 'Gabungan data warga dari seluruh RT 001 - 010 di RW 012.',
-    icon: Users,
-    iconBox: 'bg-sky-500/10 border-sky-500/20 text-sky-400',
-  },
+const HIGHLIGHTS: { href: string; title: string; desc: string; icon: Icon; iconBox: string }[] = [
   {
     href: '/umkm',
     title: 'Pemberdayaan UMKM Lokal',
@@ -67,12 +50,6 @@ type PublicUmkm = {
 
 export default function HomePage() {
   const [umkmList, setUmkmList] = useState<PublicUmkm[]>([]);
-  const stat = useStatistikRingkas();
-  const { selectedRt } = useScope();
-  // Kartu "RT" = RT akun (atau RT terpilih untuk admin); kartu "RW" = jumlah semua RT.
-  const rtLabel = selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`;
-  const statFor = (scope: 'rt' | 'rw') => (scope === 'rw' ? stat : ringkasUntuk(stat, selectedRt));
-
   useEffect(() => {
     let alive = true;
     fetch('/api/umkm/public')
@@ -136,11 +113,12 @@ export default function HomePage() {
 
             {/* Feature Highlights Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-12 sm:mt-16">
+              <StatistikPanel className="sm:col-span-2" />
               {HIGHLIGHTS.map((h) => {
                 const IconComp = h.icon;
                 return (
                   <Link
-                    key={h.href + (h.scope ?? '')}
+                    key={h.href}
                     href={h.href}
                     className="group flex flex-col justify-between bg-slate-900/80 border border-slate-800 p-5 sm:p-6 rounded-2xl hover:border-emerald-500/40 hover:-translate-y-0.5 transition-all"
                   >
@@ -148,22 +126,8 @@ export default function HomePage() {
                       <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl border flex items-center justify-center ${h.iconBox}`}>
                         <IconComp className="w-5 h-5 sm:w-6 sm:h-6" />
                       </div>
-                      <h3 className="text-base sm:text-lg font-bold text-white">{h.title}{h.scope && <span className="ml-2 align-middle rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">{h.scope === 'rw' ? 'RW 012' : rtLabel}</span>}</h3>
+                      <h3 className="text-base sm:text-lg font-bold text-white">{h.title}</h3>
                       <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">{h.desc}</p>
-                      {h.scope && statFor(h.scope) && (
-                        <div className="grid grid-cols-3 gap-2 pt-1">
-                          {[
-                            ['Warga', statFor(h.scope)!.total],
-                            ['Tetap', statFor(h.scope)!.tetap],
-                            ['Kontrak', statFor(h.scope)!.kontrak],
-                          ].map(([label, n]) => (
-                            <div key={label} className="rounded-lg bg-slate-950/60 border border-slate-800 px-2 py-1.5 text-center">
-                              <div className="text-sm font-black text-white">{n}</div>
-                              <div className="text-[10px] text-slate-400">{label}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                     <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-emerald-400 group-hover:gap-2 transition-all">
                       Buka <ArrowRight className="w-3.5 h-3.5" />
