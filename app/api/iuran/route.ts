@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { IuranKewajibanModel } from '@/lib/mongoose';
+import { getScope, denied, forceRt, ownershipDenied } from '@/lib/scope.server';
 
 export async function GET(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
     await dbConnect();
 
     const { searchParams } = new URL(req.url);
@@ -13,7 +16,8 @@ export async function GET(req: NextRequest) {
 
     const query: Record<string, unknown> = {};
 
-    if (rt && rt !== 'ALL') query.rt = rt;
+    if (!scope.all) query.rt = scope.rt;
+    else if (rt && rt !== 'ALL') query.rt = rt;
     if (tahun) query.tahun = Number(tahun);
     if (warga_id) query.warga_id = warga_id;
 
@@ -41,9 +45,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
 
     const body = await req.json();
+    forceRt(scope, body);
 
     const doc = await IuranKewajibanModel.create(body);
 
@@ -64,6 +72,9 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
 
     const { searchParams } = new URL(req.url);
@@ -76,6 +87,8 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    const denyOwn = await ownershipDenied(scope, IuranKewajibanModel, id);
+    if (denyOwn) return denyOwn;
     const deleted = await IuranKewajibanModel.findByIdAndDelete(id);
 
     if (!deleted) {

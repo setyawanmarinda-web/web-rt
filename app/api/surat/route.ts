@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { SuratModel } from '@/lib/mongoose';
+import { getScope, denied, rtQuery, forceRt, lockRt, ownershipDenied } from '@/lib/scope.server';
 
 function toPlain(d: Record<string, unknown>) {
   return { ...d, id: (d._id as { toString(): string })?.toString(), _id: undefined, __v: undefined };
@@ -10,9 +11,11 @@ function toPlain(d: Record<string, unknown>) {
 // GET /api/surat?rt=002
 export async function GET(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
     await dbConnect();
     const rt = req.nextUrl.searchParams.get('rt');
-    const query = rt && rt !== 'ALL' ? { rt } : {};
+    const query = rtQuery(scope, rt);
     const docs = await SuratModel.find(query).sort({ tanggal_pengajuan: -1 }).lean();
     return NextResponse.json(docs.map((d) => toPlain(d as Record<string, unknown>)));
   } catch (err) {
@@ -24,8 +27,12 @@ export async function GET(req: NextRequest) {
 // POST /api/surat
 export async function POST(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
     const body = await req.json();
+    forceRt(scope, body);
     // Auto generate no_surat
     const now = new Date();
     const year = now.getFullYear();
@@ -45,8 +52,14 @@ export async function POST(req: NextRequest) {
 // PATCH /api/surat
 export async function PATCH(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
     const { id, ...changes } = await req.json();
+    lockRt(scope, changes);
+    const denyOwn = await ownershipDenied(scope, SuratModel, id);
+    if (denyOwn) return denyOwn;
     const doc = await SuratModel.findByIdAndUpdate(id, changes, { new: true });
     if (!doc) return NextResponse.json({ error: 'Surat tidak ditemukan' }, { status: 404 });
     return NextResponse.json(toPlain(doc.toObject() as Record<string, unknown>));
@@ -59,9 +72,14 @@ export async function PATCH(req: NextRequest) {
 // DELETE /api/surat?id=xyz
 export async function DELETE(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
     const id = req.nextUrl.searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID tidak diberikan' }, { status: 400 });
+    const denyOwn = await ownershipDenied(scope, SuratModel, id);
+    if (denyOwn) return denyOwn;
     const doc = await SuratModel.findByIdAndDelete(id);
     if (!doc) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 });
     return NextResponse.json({ success: true });

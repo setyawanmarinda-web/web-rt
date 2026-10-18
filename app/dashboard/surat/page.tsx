@@ -5,8 +5,10 @@ import { useSimStore } from '@/lib/store';
 import DatePickerField from '@/components/DatePickerField';
 import { FileText, Clock, CheckCircle2, AlertCircle, Plus, Calendar, Trash2, Pencil, X } from 'lucide-react';
 import { SortGroup } from '@/components/LayoutEdit';
+import { useViewOnly } from '@/lib/scope';
 
 export default function SuratPage() {
+  const viewOnly = useViewOnly();
   const { suratList, selectedRt, addSurat, updateData, updateSuratStatus, deleteData } = useSimStore();
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -87,17 +89,23 @@ export default function SuratPage() {
                   </span>
 
                   {item.status !== 'Disetujui' && (
-                    <button
+                    (!viewOnly && (
+<button
                       onClick={() => updateSuratStatus(item.id, 'Disetujui')}
                       className="px-3 py-1 bg-emerald-500 text-slate-950 text-xs font-bold rounded-lg hover:bg-emerald-400 transition-colors"
                     >
                       Setujui Surat
                     </button>
+))
                   )}
-                  <button onClick={() => startEdit(item)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit Surat"><Pencil className="w-4 h-4" /></button>
-                  <button onClick={() => handleDelete(item.id, item.nama_pemohon)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Surat">
+                  {!viewOnly && (
+<button onClick={() => startEdit(item)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit Surat"><Pencil className="w-4 h-4" /></button>
+)}
+                  {!viewOnly && (
+<button onClick={() => handleDelete(item.id, item.nama_pemohon)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Surat">
                     <Trash2 className="w-4 h-4" />
                   </button>
+)}
                 </div>
               </div>
             ))}
@@ -105,7 +113,8 @@ export default function SuratPage() {
         </div>
 
         {/* Form Ajukan Surat (4 cols) */}
-        <div data-lo-p="p2" data-lo-w="4" data-lo-s="n" className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl h-fit">
+        {!viewOnly && (
+<div data-lo-p="p2" data-lo-w="4" data-lo-s="n" className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl h-fit">
           <div className="flex items-center justify-between mb-4"><h2 className="text-base sm:text-lg font-bold text-white">{editingId ? 'Edit Pengajuan Surat' : 'Buat Pengajuan Surat Baru'}</h2>{editingId && <button type="button" onClick={() => { setEditingId(null); setNamaPemohon(''); setTanggalLahir(''); setKeperluan(''); }} className="text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}</div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -161,6 +170,7 @@ export default function SuratPage() {
             </button>
           </form>
         </div>
+)}
 
       </SortGroup>
 </div>

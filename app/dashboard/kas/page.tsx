@@ -304,7 +304,7 @@ function KasDashboardContent() {
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Kas & Iuran Warga</h1>
             <span className="bg-emerald-500/20 text-emerald-400 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-              Panel RT {selectedRt}
+              Panel {selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`}
             </span>
           </div>
           <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
@@ -312,10 +312,10 @@ function KasDashboardContent() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800 self-start md:self-auto w-full md:w-auto justify-between md:justify-start">
+        <div className="flex items-center gap-3 self-start md:self-auto w-full md:w-auto justify-between md:justify-start">
           <div className="text-left md:text-right">
-            <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block uppercase">Total Saldo Bersih</span>
-            <span className="text-lg sm:text-xl font-extrabold text-emerald-400">
+            <span className="text-xs sm:text-sm font-semibold text-slate-400 block uppercase">Total Saldo Bersih</span>
+            <span className="text-3xl sm:text-5xl font-black tracking-tight text-emerald-400">
               Rp {summary.saldoAkhir.toLocaleString('id-ID')}
             </span>
           </div>
@@ -329,7 +329,7 @@ function KasDashboardContent() {
       <div data-kas-block="metric">
         <h3 className="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
           <Wallet className="w-4 h-4 text-emerald-400" />
-          <span>Rincian Saldo Akumulasi per Pos (RT {selectedRt})</span>
+          <span>Rincian Saldo Akumulasi per Pos ({selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`})</span>
         </h3>
 
         <KasSortGroup attr="data-kas-card" storageKey="kas-cards-v1" layout="flow" gap="0.75rem">
@@ -782,7 +782,7 @@ function KasDashboardContent() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-white">Riwayat & Mutasi Transaksi Keuangan</h2>
-            <p className="text-xs text-slate-400">Catatan iuran & pengeluaran RT {selectedRt}</p>
+            <p className="text-xs text-slate-400">Catatan iuran & pengeluaran {selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`}</p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -923,7 +923,7 @@ function KasDashboardContent() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-white">Dashboard Simpan Pinjam</h2>
-            <p className="text-xs text-slate-400">Riwayat simpanan, pinjaman, dan pembayaran cicilan RT {selectedRt}</p>
+            <p className="text-xs text-slate-400">Riwayat simpanan, pinjaman, dan pembayaran cicilan {selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`}</p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-3 text-xs font-semibold">
             <span className="rounded-lg bg-emerald-500/10 px-3 py-2 text-emerald-300">Simpanan Rp {totalSimpanan.toLocaleString('id-ID')}</span>

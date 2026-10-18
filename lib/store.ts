@@ -5,6 +5,7 @@ import {
   Warga, KasRT, SimpanPinjam, IuranKewajiban, Kegiatan, Pengumuman, UMKM, Surat, Arsip,
 } from './types';
 import { DATA_MODE } from './dataMode';
+import { useScope } from './scope';
 
 // ─── LocalStorage keys (hanya dipakai saat DEV mode) ─────────────────────────
 const STORAGE_KEYS = {
@@ -39,6 +40,16 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 // ─── Main Store Hook ──────────────────────────────────────────────────────────
+// Endpoint yang bisa ditolak (403) untuk akun tertentu dianggap kosong, bukan error.
+async function apiList<T extends unknown[]>(url: string): Promise<T> {
+  try {
+    return await apiFetch<T>(url);
+  } catch (e) {
+    if (e instanceof Error && e.message === 'Tidak punya akses') return [] as unknown as T;
+    throw e;
+  }
+}
+
 export function useSimStore() {
   const [dataMode, setDataModeState] = useState<'dev' | 'live'>(DATA_MODE);
   const isLive = dataMode === 'live';
@@ -55,7 +66,7 @@ export function useSimStore() {
   const [umkmList,        setUmkmList]         = useState<UMKM[]>([]);
   const [suratList,       setSuratList]        = useState<Surat[]>([]);
   const [arsipList,       setArsipList]        = useState<Arsip[]>([]);
-  const [selectedRt,      setSelectedRt]       = useState<string>('002');
+  const { selectedRt, setSelectedRt } = useScope();
 
   // Load saved mode from localStorage on mount
   useEffect(() => {
@@ -109,12 +120,12 @@ export function useSimStore() {
         apiFetch<Warga[]>('/api/warga'),
         apiFetch<KasRT[]>('/api/kas'),
         apiFetch<SimpanPinjam[]>('/api/simpan-pinjam'),
-        apiFetch<IuranKewajiban[]>('/api/iuran'),
-        apiFetch<Kegiatan[]>('/api/kegiatan'),
+        apiList<IuranKewajiban[]>('/api/iuran'),
+        apiList<Kegiatan[]>('/api/kegiatan'),
         apiFetch<Pengumuman[]>('/api/pengumuman'),
         apiFetch<UMKM[]>('/api/umkm'),
         apiFetch<Surat[]>('/api/surat'),
-        apiFetch<Arsip[]>('/api/arsip'),
+        apiList<Arsip[]>('/api/arsip'),
       ])
         .then(([warga, kas, simpanPinjam, iuran, kegiatan, pengumuman, umkm, surat, arsip]) => {
           setWargaList(warga);

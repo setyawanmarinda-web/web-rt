@@ -5,6 +5,7 @@ import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import dbConnect from '@/lib/dbConnect';
 import { UserModel } from '@/lib/userModel';
+import { normUsername } from '@/lib/username';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: 'jwt', maxAge: 60 * 60 * 8 },
@@ -18,13 +19,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!username || !password) return null;
 
         await dbConnect();
-        const u: any = await UserModel.findOne({ username, aktif: true }).lean();
+        const key = normUsername(username);
+        let u: any = await UserModel.findOne({ username_key: key, aktif: true }).lean();
+        if (!u) u = await UserModel.findOne({ username, aktif: true }).lean();
         if (!u) return null;
         if (!(await bcrypt.compare(password, u.password_hash))) return null;
 
         return {
           id: String(u._id),
           name: u.nama,
+          username: u.username ?? username,
           role: u.role,
           rw: u.rw ?? '',
           rt: u.rt ?? '',
@@ -38,6 +42,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         const x = user as any;
+        token.username = x.username;
         token.role = x.role;
         token.rw = x.rw;
         token.rt = x.rt;
@@ -49,6 +54,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     session({ session, token }) {
       const s = session.user as any;
       s.id = token.sub;
+      s.username = token.username;
       s.role = token.role;
       s.rw = token.rw;
       s.rt = token.rt;

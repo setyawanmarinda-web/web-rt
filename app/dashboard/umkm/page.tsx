@@ -6,8 +6,10 @@ import { useSimStore } from '@/lib/store';
 import { Download, GripVertical, MessageCircle, Store, Trash2, Pencil, Upload, X } from 'lucide-react';
 import type { UMKM } from '@/lib/types';
 import { SortGroup } from '@/components/LayoutEdit';
+import { useViewOnly } from '@/lib/scope';
 
 export default function UmkmPage() {
+  const viewOnly = useViewOnly();
   const { umkmList, wargaList, addUmkm, updateData, deleteData } = useSimStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -244,12 +246,16 @@ export default function UmkmPage() {
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <input ref={importInputRef} type="file" accept=".xlsx,.xls" onChange={handleImportExcel} className="hidden" />
+              {!viewOnly && (
               <button type="button" onClick={handleExportExcel} className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-500 hover:text-slate-950" title="Export Direktori UMKM ke Excel">
                 <Download className="h-4 w-4" /> Export
               </button>
-              <button type="button" onClick={() => importInputRef.current?.click()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs font-bold text-sky-300 hover:bg-sky-500 hover:text-slate-950" title="Import dan update Direktori UMKM dari Excel">
+              )}
+              {!viewOnly && (
+<button type="button" onClick={() => importInputRef.current?.click()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs font-bold text-sky-300 hover:bg-sky-500 hover:text-slate-950" title="Import dan update Direktori UMKM dari Excel">
                 <Upload className="h-4 w-4" /> Import
               </button>
+)}
             </div>
             <div className="relative w-full sm:max-w-xs">
               <input
@@ -294,7 +300,11 @@ export default function UmkmPage() {
                 <MessageCircle className="w-4 h-4" />
                 <span>Hubungi via WhatsApp ({u.whatsapp})</span>
               </a>
-              <div className="flex gap-2 mt-2"><button onClick={() => startEdit(u)} className="flex-1 py-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white font-semibold border border-sky-500/20 rounded-lg text-[10px] flex items-center justify-center gap-1 transition-all"><Pencil className="w-3 h-3" /> Edit</button><button onClick={() => handleDelete(u.id, u.nama_usaha)} className="flex-1 py-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white font-semibold border border-rose-500/20 rounded-lg text-[10px] flex items-center justify-center gap-1 transition-all"><Trash2 className="w-3 h-3" /> Hapus</button></div>
+              <div className="flex gap-2 mt-2">{!viewOnly && (
+<button onClick={() => startEdit(u)} className="flex-1 py-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white font-semibold border border-sky-500/20 rounded-lg text-[10px] flex items-center justify-center gap-1 transition-all"><Pencil className="w-3 h-3" /> Edit</button>
+)}{!viewOnly && (
+<button onClick={() => handleDelete(u.id, u.nama_usaha)} className="flex-1 py-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white font-semibold border border-rose-500/20 rounded-lg text-[10px] flex items-center justify-center gap-1 transition-all"><Trash2 className="w-3 h-3" /> Hapus</button>
+)}</div>
             </div>
           ))}
           {!filteredUmkm.length && <div className="sm:col-span-2 xl:col-span-4 rounded-xl border border-dashed border-slate-800 p-8 text-center text-sm text-slate-500">UMKM tidak ditemukan.</div>}
@@ -302,7 +312,8 @@ export default function UmkmPage() {
         </div>
 
         {/* Form Tambah UMKM (4 cols) */}
-        <div data-lo-p="p2" data-lo-w="3" data-lo-s="n" className="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl h-fit">
+        {!viewOnly && (
+<div data-lo-p="p2" data-lo-w="3" data-lo-s="n" className="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl h-fit">
           <div className="flex items-center gap-2 mb-4">
             <Store className="w-5 h-5 text-emerald-400" />
             <h2 className="text-lg font-bold text-white">{editingId ? 'Edit UMKM' : 'Daftarkan UMKM Anda'}</h2>{editingId && <button type="button" onClick={() => { setEditingId(null); setNamaUsaha(''); setPemilik(''); setDeskripsi(''); setWhatsapp(''); setSelectedFile(null); setFileError(''); setCurrentFotoUrl(''); if (fileInputRef.current) fileInputRef.current.value = ''; }} className="ml-auto text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}
@@ -413,6 +424,7 @@ export default function UmkmPage() {
             </button>
           </form>
         </div>
+)}
 
       </SortGroup>
 </div>

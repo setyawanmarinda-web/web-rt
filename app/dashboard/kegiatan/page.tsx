@@ -40,7 +40,7 @@ export default function KegiatanPage() {
       tanggal,
       waktu: waktu || '08:00 WIB',
       lokasi: lokasi || 'Balai Warga RT 002',
-      rt: selectedRt === 'ALL' ? '002' : selectedRt,
+      rt: selectedRt === 'ALL' ? '012' : selectedRt,
       kategori,
       status: 'Akan Datang'
     } as const;
@@ -62,7 +62,7 @@ export default function KegiatanPage() {
 <div data-lo="b1" className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white">Agenda Kegiatan Warga</h1>
-          <p className="text-slate-400 text-sm">Manajemen CRUD agenda kegiatan RT {selectedRt} (Kerja Bakti, Rapat RT/RW, Posyandu)</p>
+          <p className="text-slate-400 text-sm">Manajemen CRUD agenda kegiatan {selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`} (Kerja Bakti, Rapat RT/RW, Posyandu)</p>
         </div>
       </div>
 

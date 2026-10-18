@@ -25,7 +25,7 @@ import {
   BarChart3, FolderArchive, FileText, FileSpreadsheet, Settings, Package,
   Shield, X, GripVertical
 } from 'lucide-react';
-import { RT_LIST } from '@/lib/types';
+import { useScope, roleLabel, canSeeMenu } from '@/lib/scope';
 import { LayoutEditBar, sanitizeOrder, useLongPressEdit } from '@/components/LayoutEdit';
 import { useEditing, useResetVersion } from '@/lib/layoutEdit';
 
@@ -45,7 +45,7 @@ const MENU_ITEMS = [
   { href: '/dashboard/arsip', label: 'Arsip Digital', icon: FolderArchive },
   { href: '/dashboard/inventory', label: 'Inventory', icon: Package },
   { href: '/dashboard/umkm', label: 'Direktori UMKM', icon: ShoppingBag },
-  { href: '/dashboard/laporan', label: 'Rekap & Export', icon: FileSpreadsheet },
+  { href: '/dashboard/laporan', label: 'Dashboard', icon: FileSpreadsheet },
   { href: '/dashboard/pengaturan', label: 'Pengaturan System', icon: Settings },
 ];
 
@@ -123,6 +123,7 @@ function SidebarLink({
 
 export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
+  const { options: scopeOptions, locked, user: scopeUser } = useScope();
   const editing = useEditing();
   const resetVersion = useResetVersion();
   const seenReset = useRef(resetVersion);
@@ -164,7 +165,8 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
 
   const menuItems = order
     .map((href) => MENU_ITEMS.find((m) => m.href === href))
-    .filter((m): m is MenuItem => Boolean(m));
+    .filter((m): m is MenuItem => Boolean(m))
+    .filter((m) => canSeeMenu(scopeUser, m.href));
 
   return (
     <>
@@ -185,7 +187,7 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
       >
         {/* Header with Close button on Mobile */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <Link href="/" title="Ke Halaman Publik RW" className="flex items-center gap-3 rounded-lg hover:opacity-80 transition-opacity">
             <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center text-slate-950 font-bold flex-shrink-0">
               <Shield className="w-5 h-5" />
             </div>
@@ -193,7 +195,7 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
               <h2 className="font-bold text-white text-sm tracking-wide">Panel RT & RW 012</h2>
               <p className="text-xs text-emerald-400 font-medium">Kelurahan Bahagia</p>
             </div>
-          </div>
+          </Link>
 
           <button
             onClick={onMobileClose}
@@ -206,19 +208,19 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
         {/* Selector RT active scope (RT 001 - RT 010, default RT 002) */}
         <div className="p-4 border-b border-slate-800/80 bg-slate-950/40">
           <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-            Scope RT Aktif:
+            {locked ? 'RT Anda:' : 'Scope RT Aktif:'}
           </label>
           <select
             value={selectedRt}
             onChange={(e) => onRtChange(e.target.value)}
+            disabled={locked}
             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 font-medium cursor-pointer transition-colors"
           >
-            {RT_LIST.map((rt) => (
-              <option key={rt} value={rt}>
-                RT {rt}
+            {scopeOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
               </option>
             ))}
-            <option value="ALL">Gabungan Semua RT (Admin RW)</option>
           </select>
         </div>
 
@@ -258,8 +260,8 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
               RT
             </div>
             <div className="overflow-hidden">
-              <p className="text-xs font-semibold text-white truncate">Pengurus RT {selectedRt}</p>
-              <p className="text-[11px] text-slate-400 truncate">Hak Akses: Pengurus RT</p>
+              <p className="text-xs font-semibold text-white truncate">{scopeUser?.name || 'Pengurus'}</p>
+              <p className="text-[11px] text-slate-400 truncate">Hak Akses: {roleLabel(scopeUser)}</p>
             </div>
           </div>
         </div>

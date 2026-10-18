@@ -4,8 +4,10 @@ import React, { useState } from 'react';
 import { useSimStore } from '@/lib/store';
 import { Megaphone, Plus, BellRing, Trash2, Pencil, X } from 'lucide-react';
 import { SortGroup } from '@/components/LayoutEdit';
+import { useViewOnly } from '@/lib/scope';
 
 export default function PengumumanPage() {
+  const viewOnly = useViewOnly();
   const { pengumumanList, selectedRt, addPengumuman, updateData, deleteData } = useSimStore();
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -21,7 +23,7 @@ export default function PengumumanPage() {
   const [isi, setIsi] = useState('');
   const [kategori, setKategori] = useState<'Penting' | 'Informasi' | 'Himbauan'>('Penting');
 
-  const filtered = selectedRt === 'ALL' ? pengumumanList : pengumumanList.filter(p => p.rt === selectedRt);
+  const filtered = selectedRt === 'ALL' ? pengumumanList : pengumumanList.filter((p) => p.rt === selectedRt || p.rt === '012');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +35,7 @@ export default function PengumumanPage() {
       kategori,
       tanggal: new Date().toISOString().split('T')[0],
       status: 'Aktif',
-      rt: selectedRt === 'ALL' ? '002' : selectedRt
+      rt: selectedRt === 'ALL' ? '012' : selectedRt
     } as const;
     if (editingId) await updateData('pengumuman', editingId, data); else await addPengumuman(data);
 
@@ -49,7 +51,7 @@ export default function PengumumanPage() {
 <div data-lo="b1" className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black text-white">Publikasi Pengumuman Warga</h1>
-          <p className="text-slate-400 text-sm">Pengumuman penting dengan indikator status Aktif / Ditarsipkan untuk RT {selectedRt}</p>
+          <p className="text-slate-400 text-sm">Pengumuman penting dengan indikator status Aktif / Ditarsipkan untuk {selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`}</p>
         </div>
       </div>
 
@@ -74,14 +76,19 @@ export default function PengumumanPage() {
               <h3 className="text-lg font-bold text-white mb-2">{item.judul}</h3>
               <p className="text-slate-300 text-sm leading-relaxed mb-3">{item.isi}</p>
               <div className="flex justify-end">
-                <div className="flex gap-2"><button onClick={() => startEdit(item)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit Pengumuman"><Pencil className="w-4 h-4" /></button><button onClick={() => handleDelete(item.id, item.judul)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Pengumuman"><Trash2 className="w-4 h-4" /></button></div>
+                <div className="flex gap-2">{!viewOnly && (
+<button onClick={() => startEdit(item)} className="p-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500 hover:text-white rounded-lg transition-colors" title="Edit Pengumuman"><Pencil className="w-4 h-4" /></button>
+)}{!viewOnly && (
+<button onClick={() => handleDelete(item.id, item.judul)} className="p-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-colors" title="Hapus Pengumuman"><Trash2 className="w-4 h-4" /></button>
+)}</div>
               </div>
             </div>
           ))}
         </div>
 
         {/* Form Tambah (4 cols) */}
-        <div data-lo-p="p2" data-lo-w="4" data-lo-s="n" className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
+        {!viewOnly && (
+<div data-lo-p="p2" data-lo-w="4" data-lo-s="n" className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-fit">
           <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-bold text-white">{editingId ? 'Edit Pengumuman' : 'Buat Pengumuman Baru'}</h2>{editingId && <button type="button" onClick={() => { setEditingId(null); setJudul(''); setIsi(''); }} className="text-slate-400 hover:text-white" title="Batal Edit"><X className="w-4 h-4" /></button>}</div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -129,6 +136,7 @@ export default function PengumumanPage() {
             </button>
           </form>
         </div>
+)}
 
       </SortGroup>
 </div>

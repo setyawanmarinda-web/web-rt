@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { IuranKewajibanModel, WargaModel } from '@/lib/mongoose';
+import { getScope, denied, forceRt } from '@/lib/scope.server';
 
 export async function POST(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
 
     const body = await req.json();
+    forceRt(scope, body);
     const tahun = Number(body.tahun || new Date().getFullYear());
     const rt = body.rt || 'ALL';
     const nominal = Number(body.nominal || 55000);

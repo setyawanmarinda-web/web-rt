@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useScope, canSeeMenu } from '@/lib/scope';
 import Sidebar from '@/components/Sidebar';
 import { useSimStore } from '@/lib/store';
-import Link from 'next/link';
-import { ArrowLeft, Bell, Search, Menu } from 'lucide-react';
-import LogoutButton from '@/components/LogoutButton';
+import { Search, Menu } from 'lucide-react';
+import ProfileMenu from '@/components/ProfileMenu';
+import NotificationBell from '@/components/NotificationBell';
 import ThemeToggle from '@/components/ThemeToggle';
 
 export default function DashboardLayout({
@@ -13,8 +15,15 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { selectedRt, setSelectedRt, dataMode, setDataMode } = useSimStore();
+  const { selectedRt, setSelectedRt, pengumumanList, kegiatanList } = useSimStore();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user: scopeUser, ready: scopeReady } = useScope();
+  const blocked = scopeReady && !!scopeUser && !canSeeMenu(scopeUser, pathname);
+  useEffect(() => {
+    if (blocked) router.replace('/dashboard/laporan');
+  }, [blocked, router]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans antialiased">
@@ -41,43 +50,10 @@ export default function DashboardLayout({
             >
               <Menu className="w-5 h-5 text-emerald-400" />
             </button>
-
-            <Link
-              href="/"
-              className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors bg-slate-800/80 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg border border-slate-700"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Ke Halaman Publik RW</span>
-              <span className="sm:hidden">Publik</span>
-            </Link>
-
-            <div className="h-4 w-[1px] bg-slate-800 hidden sm:block" />
-
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
-                RT {selectedRt}
-              </span>
-              {dataMode === 'dev' ? (
-                <button
-                  onClick={() => setDataMode('live')}
-                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20 whitespace-nowrap hover:bg-amber-500/20 transition-colors"
-                  title="Switch to LIVE mode"
-                >
-                  🟡 DEV MODE
-                </button>
-              ) : (
-                <button
-                  onClick={() => setDataMode('dev')}
-                  className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 whitespace-nowrap hover:bg-emerald-500/20 transition-colors"
-                  title="Switch to DEV mode"
-                >
-                  🟢 LIVE (MongoDB)
-                </button>
-              )}
-            </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <NotificationBell pengumuman={pengumumanList} kegiatan={kegiatanList} selectedRt={selectedRt} />
             <div className="hidden lg:flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-400 text-xs w-56">
               <Search className="w-3.5 h-3.5" />
               <input
@@ -88,17 +64,13 @@ export default function DashboardLayout({
             </div>
             
             <ThemeToggle />
-            <LogoutButton />
-            <button className="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:text-white transition-all relative">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            </button>
+            <ProfileMenu />
           </div>
         </header>
 
         {/* Content Body */}
         <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
-          {children}
+          {blocked ? null : children}
         </main>
       </div>
     </div>

@@ -5,14 +5,17 @@ import {
   InventoryHistoryModel,
   InventoryModel,
 } from '@/lib/mongoose';
+import { getScope, denied, forceRt, lockRt, ownershipDenied, ownershipDeniedVia } from '@/lib/scope.server';
 
 // GET /api/inventory/history?rt=002
 // GET /api/inventory/history?barang_id=xyz
 export async function GET(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
     await dbConnect();
 
-    const rt = req.nextUrl.searchParams.get('rt');
+    const rt = scope.all ? req.nextUrl.searchParams.get('rt') : scope.rt;
     const barangId = req.nextUrl.searchParams.get('barang_id');
 
     const query: Record<string, string> = {};
@@ -70,9 +73,13 @@ export async function GET(req: NextRequest) {
 // POST /api/inventory/history
 export async function POST(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
 
     const body = await req.json();
+    forceRt(scope, body);
 
     const {
       barang_id,
@@ -90,6 +97,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const denyBarang = await ownershipDenied(scope, InventoryModel, barang_id);
+    if (denyBarang) return denyBarang;
     const inventory = await InventoryModel.findById(barang_id);
 
     if (!inventory) {
@@ -231,9 +240,13 @@ export async function POST(req: NextRequest) {
 // Koreksi jumlah transaksi tanpa menghapus riwayat asli
 export async function PATCH(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
 
     const body = await req.json();
+    lockRt(scope, body);
 
     const {
       id,
@@ -249,6 +262,8 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    const denyHist = await ownershipDeniedVia(scope, InventoryHistoryModel, id, InventoryModel, 'barang_id');
+    if (denyHist) return denyHist;
     const history = await InventoryHistoryModel.findById(id);
 
     if (!history) {
@@ -367,6 +382,9 @@ export async function PATCH(req: NextRequest) {
 // DELETE /api/inventory/history?id=xyz
 export async function DELETE(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
 
     const id = req.nextUrl.searchParams.get('id');
@@ -378,6 +396,8 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    const denyOwn = await ownershipDeniedVia(scope, InventoryHistoryModel, id, InventoryModel, 'barang_id');
+    if (denyOwn) return denyOwn;
     const doc = await InventoryHistoryModel.findByIdAndDelete(id);
 
     if (!doc) {

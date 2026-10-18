@@ -158,7 +158,7 @@ export function LayoutEditBar() {
       `}</style>
       {editing && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-3 rounded-full bg-slate-900 border border-emerald-500/40 px-4 py-2 text-xs text-slate-200 shadow-2xl">
-          <span>Seret untuk atur. Klik 2x di mana saja untuk selesai.</span>
+          <span>Seret untuk atur, tarik gagang hijau untuk lebar. Klik 2x untuk selesai.</span>
           <button
             type="button"
             onClick={() => layoutEdit.resetAll()}
@@ -172,22 +172,54 @@ export function LayoutEditBar() {
   );
 }
 
-function computeSpans(order: string[], widths: Record<string, number>): Record<string, number> {
+function computeSpans(
+  order: string[],
+  widths: Record<string, number>,
+  pinned: Set<string>,
+): Record<string, number> {
   const result: Record<string, number> = {};
   let row: string[] = [];
   let total = 0;
 
   const flush = () => {
     if (!row.length) return;
-    let used = 0;
-    row.forEach((id, i) => {
-      const span =
-        i === row.length - 1
-          ? Math.max(1, 12 - used)
-          : Math.max(1, Math.round((widths[id] * 12) / total));
-      result[id] = span;
-      used += span;
-    });
+    const pin = row.filter((id) => pinned.has(id));
+    const free = row.filter((id) => !pinned.has(id));
+
+    if (pin.length === 0) {
+      let used = 0;
+      row.forEach((id, i) => {
+        const span =
+          i === row.length - 1
+            ? Math.max(1, 12 - used)
+            : Math.max(1, Math.round((widths[id] * 12) / total));
+        result[id] = span;
+        used += span;
+      });
+    } else if (free.length === 0) {
+      let used = 0;
+      row.forEach((id, i) => {
+        const span = i === row.length - 1 ? Math.max(1, 12 - used) : widths[id];
+        result[id] = span;
+        used += span;
+      });
+    } else {
+      const pinSum = pin.reduce((s, id) => s + widths[id], 0);
+      const rest = Math.max(free.length, 12 - pinSum);
+      const freeTotal = free.reduce((s, id) => s + widths[id], 0);
+      let used = 0;
+      free.forEach((id, i) => {
+        const span =
+          i === free.length - 1
+            ? Math.max(1, rest - used)
+            : Math.max(1, Math.round((widths[id] * rest) / freeTotal));
+        result[id] = span;
+        used += span;
+      });
+      pin.forEach((id) => {
+        result[id] = widths[id];
+      });
+    }
     row = [];
     total = 0;
   };
@@ -234,6 +266,7 @@ export function SortGroup({
   const idsKey = defaultIds.join('|');
 
   const [order, setOrder] = useState<string[]>(defaultIds);
+  const [wmap, setWmap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     try {
@@ -241,6 +274,18 @@ export function SortGroup({
       setOrder(sanitizeOrder(raw ? JSON.parse(raw) : null, defaultIds));
     } catch {
       setOrder(defaultIds);
+    }
+    try {
+      const rawW = localStorage.getItem(storageKey + ':w');
+      const parsed = rawW ? JSON.parse(rawW) : {};
+      const clean: Record<string, number> = {};
+      Object.keys(parsed || {}).forEach((k) => {
+        const v = Number(parsed[k]);
+        if (defaultIds.includes(k) && v >= 2 && v <= 12) clean[k] = Math.round(v);
+      });
+      setWmap(clean);
+    } catch {
+      setWmap({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey, idsKey]);
@@ -250,8 +295,10 @@ export function SortGroup({
     seenReset.current = resetVersion;
     try {
       localStorage.removeItem(storageKey);
+      localStorage.removeItem(storageKey + ':w');
     } catch {}
     setOrder(defaultIds);
+    setWmap({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetVersion]);
 
@@ -273,17 +320,29 @@ export function SortGroup({
     } catch {}
   }
 
+  function onResize(id: string, span: number) {
+    const next = { ...wmap, [id]: span };
+    setWmap(next);
+    try {
+      localStorage.setItem(storageKey + ':w', JSON.stringify(next));
+    } catch {}
+  }
+
   const byId = new Map(sortable.map((el) => [String(el.props[attr]), el]));
   const widths: Record<string, number> = {};
   const notSmall: Record<string, boolean> = {};
   sortable.forEach((el) => {
     const id = String(el.props[attr]);
     const w = Number(el.props['data-lo-w']);
-    widths[id] = w >= 1 && w <= 12 ? Math.round(w) : 12;
+    const base = w >= 1 && w <= 12 ? Math.round(w) : 12;
+    widths[id] = wmap[id] ?? base;
     notSmall[id] = el.props['data-lo-s'] === 'n';
   });
+  const pinned = new Set(Object.keys(wmap).filter((id) => byId.has(id)));
   const spans =
-    layout === 'flow' ? computeSpans(order.filter((id) => byId.has(id)), widths) : null;
+    layout === 'flow'
+      ? computeSpans(order.filter((id) => byId.has(id)), widths, pinned)
+      : null;
 
   const strategy = layout === 'stack' ? verticalListSortingStrategy : rectSortingStrategy;
   const baseClass = className ?? (layout === 'stack' ? 'space-y-6 sm:space-y-8' : '');
@@ -310,7 +369,11 @@ export function SortGroup({
                 index={index}
                 flow={
                   spans
-                    ? { span: spans[id] ?? 12, small: widths[id] <= 4 && !notSmall[id] }
+                    ? {
+                        span: spans[id] ?? 12,
+                        small: widths[id] <= 4 && !notSmall[id],
+                        onResize,
+                      }
                     : undefined
                 }
               >
@@ -333,7 +396,7 @@ function SortItem({
 }: {
   id: string;
   index: number;
-  flow?: { span: number; small: boolean };
+  flow?: { span: number; small: boolean; onResize: (id: string, span: number) => void };
   children: ReactNode;
 }) {
   const editing = useEditing();
@@ -343,17 +406,55 @@ function SortItem({
   });
   const lp = useLongPressEdit(!editing);
 
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const rz = useRef({ x: 0, span: 12, pitch: 0, active: false });
+  const [live, setLive] = useState<number | null>(null);
+
+  function onResizeDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (!flow) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const container = rootRef.current?.parentElement;
+    if (!container) return;
+    const gap = parseFloat(getComputedStyle(container).columnGap) || 0;
+    rz.current = {
+      x: e.clientX,
+      span: flow.span,
+      pitch: (container.clientWidth + gap) / 12,
+      active: true,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setLive(flow.span);
+  }
+
+  function onResizeMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!rz.current.active) return;
+    const { x, span, pitch } = rz.current;
+    const next = Math.min(12, Math.max(2, Math.round((span * pitch + (e.clientX - x)) / pitch)));
+    setLive(next);
+  }
+
+  function onResizeEnd() {
+    if (!rz.current.active) return;
+    rz.current.active = false;
+    if (flow && live != null && live !== flow.span) flow.onResize(id, live);
+    setLive(null);
+  }
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     position: 'relative',
     zIndex: isDragging ? 20 : undefined,
-    ...(flow ? { '--lo-span': flow.span } : {}),
+    ...(flow ? { '--lo-span': live ?? flow.span } : {}),
   } as React.CSSProperties;
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node);
+        rootRef.current = node;
+      }}
       style={style}
       className={`min-w-0 ${flow ? `lo-cell${flow.small ? ' lo-small' : ''}` : ''} ${
         editing ? 'pointer-events-auto touch-none cursor-grab active:cursor-grabbing select-none' : ''
@@ -369,6 +470,18 @@ function SortItem({
         <div className={`lo-body ${flow ? 'h-full' : ''} ${editing ? 'pointer-events-none' : ''}`}>
           {children}
         </div>
+        {editing && flow && (
+          <div
+            onPointerDown={onResizeDown}
+            onPointerMove={onResizeMove}
+            onPointerUp={onResizeEnd}
+            onPointerCancel={onResizeEnd}
+            aria-label="Ubah lebar"
+            className="pointer-events-auto absolute -right-1.5 top-1/2 z-30 hidden h-14 w-3 -translate-y-1/2 cursor-ew-resize touch-none items-center justify-center rounded-full bg-emerald-400 shadow-lg lg:flex"
+          >
+            <span className="h-6 w-0.5 rounded bg-slate-950/60" />
+          </div>
+        )}
       </div>
     </div>
   );

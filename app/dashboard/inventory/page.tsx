@@ -5,8 +5,10 @@ import DatePickerField from '@/components/DatePickerField';
 import { Package, Plus, RefreshCw, Search, X, History, Minus, Pencil, Trash2 } from 'lucide-react';
 import type { Inventory, InventoryHistory } from '@/lib/types';
 import { SortGroup } from '@/components/LayoutEdit';
+import { useViewOnly } from '@/lib/scope';
 
 export default function InventoryPage() {
+  const viewOnly = useViewOnly();
   const [items, setItems] = useState<Inventory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -308,13 +310,15 @@ export default function InventoryPage() {
             Refresh
           </button>
 
-          <button
+          {!viewOnly && (
+<button
             onClick={() => setShowAddForm(true)}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-semibold hover:bg-emerald-400 transition-colors"
           >
             <Plus className="w-4 h-4" />
             Tambah Barang
           </button>
+)}
         </div>
       </div>
 
@@ -637,7 +641,8 @@ export default function InventoryPage() {
                         </div>
 
                         {!history.dikoreksi && (
-                          <button
+                          (!viewOnly && (
+<button
                             type="button"
                             onClick={() => {
                               setCorrectionHistory(history);
@@ -648,6 +653,7 @@ export default function InventoryPage() {
                           >
                             Koreksi
                           </button>
+))
                         )}
 
                         {history.dikoreksi && (
@@ -679,7 +685,8 @@ export default function InventoryPage() {
                 </p>
               </div>
 
-              <button
+              {!viewOnly && (
+<button
                 type="button"
                 onClick={() => {
                   setCorrectionHistory(null);
@@ -690,6 +697,7 @@ export default function InventoryPage() {
               >
                 <X className="w-5 h-5" />
               </button>
+)}
             </div>
 
             <div className="p-6 space-y-5">
@@ -742,7 +750,8 @@ export default function InventoryPage() {
               </div>
 
               <div className="flex gap-3 pt-1">
-                <button
+                {!viewOnly && (
+<button
                   type="button"
                   onClick={() => {
                     setCorrectionHistory(null);
@@ -754,8 +763,10 @@ export default function InventoryPage() {
                 >
                   Batal
                 </button>
+)}
 
-                <button
+                {!viewOnly && (
+<button
                   type="button"
                   onClick={handleCorrection}
                   disabled={correctionSaving}
@@ -763,6 +774,7 @@ export default function InventoryPage() {
                 >
                   {correctionSaving ? 'Menyimpan...' : 'Simpan Koreksi'}
                 </button>
+)}
               </div>
             </div>
           </div>
@@ -900,7 +912,8 @@ export default function InventoryPage() {
 
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-center gap-1.5">
-                        <button
+                        {!viewOnly && (
+<button
                           type="button"
                           onClick={() => openAction(item, 'Masuk')}
                           title="Tambah Stok"
@@ -908,8 +921,10 @@ export default function InventoryPage() {
                         >
                           <Plus className="w-4 h-4" />
                         </button>
+)}
 
-                        <button
+                        {!viewOnly && (
+<button
                           type="button"
                           onClick={() => openAction(item, 'Dipakai')}
                           title="Stok Keluar / Dipakai"
@@ -917,8 +932,10 @@ export default function InventoryPage() {
                         >
                           <Minus className="w-4 h-4" />
                         </button>
+)}
 
-                        <button
+                        {!viewOnly && (
+<button
                           type="button"
                           onClick={() => openAction(item, 'Rusak')}
                           title="Tandai Rusak"
@@ -926,8 +943,10 @@ export default function InventoryPage() {
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
+)}
 
-                        <button
+                        {!viewOnly && (
+<button
                           type="button"
                           onClick={() => openAction(item, 'Hilang')}
                           title="Tandai Hilang"
@@ -935,6 +954,7 @@ export default function InventoryPage() {
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
+)}
 
                         <button
                           type="button"

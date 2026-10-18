@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { planWargaImport, pickCol, type ImportItem, type ImportRecord } from '@/lib/wargaImport';
 import { useSimStore } from '@/lib/store';
 import DatePickerField from '@/components/DatePickerField';
 import BirthdayNotifications from '@/components/BirthdayNotifications';
+import { useScope, isViewOnly } from '@/lib/scope';
 import { RT_LIST, Warga } from '@/lib/types';
 import { getAge, getWargaAgeCategory } from '@/lib/wargaUtils';
 import { formatRupiahInput, parseRupiahInput } from '@/lib/currency';
@@ -148,7 +149,13 @@ function buildExportRows(
 
 export default function StatistikPage() {
   const { wargaList, kasList, selectedRt, simpanPinjamList, iuranList, addWarga, updateData, deleteData, refreshWarga } = useSimStore();
+  const { user: scopeUser } = useScope();
+  const viewOnly = isViewOnly(scopeUser);
+  const isMaster = scopeUser?.role === 'master';
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [hubungan, setHubungan] = useState('');
+  const [noHp, setNoHp] = useState('');
+  const [alamatBermasalah, setAlamatBermasalah] = useState<{ jumlah: number; total: number; data: { id: string; nama_lengkap: string; rt: string; alamat: string }[] } | null>(null);
 
   const [nama, setNama] = useState('');
   const [nik, setNik] = useState('');
@@ -173,7 +180,17 @@ export default function StatistikPage() {
     rt: selectedRt === 'ALL' ? '002' : selectedRt,
     status: 'Tetap' as 'Tetap' | 'Kontrak',
     nominalIuran: 0,
+    hubungan: '',
+    noHp: '',
   });
+
+  useEffect(() => {
+    if (!isMaster) return;
+    fetch('/api/warga/alamat-bermasalah')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && Array.isArray(d.data)) setAlamatBermasalah(d); })
+      .catch(() => {});
+  }, [isMaster, wargaList.length]);
 
   const filteredWarga = selectedRt === 'ALL' ? wargaList : wargaList.filter(w => w.rt === selectedRt);
   const sortedWarga = [...filteredWarga].sort((first, second) =>
@@ -519,6 +536,8 @@ export default function StatistikPage() {
       rt: selectedRt === 'ALL' ? '002' : selectedRt,
       status: 'Tetap',
       nominalIuran: 0,
+      hubungan: '',
+      noHp: '',
     });
     setShowFamilyModal(true);
   };
@@ -533,6 +552,8 @@ export default function StatistikPage() {
     setRt(item.rt);
     setStatusTinggal(item.status_tinggal);
     setNominalIuran(item.nominal_iuran ?? 0);
+    setHubungan(item.hubungan || '');
+    setNoHp(item.no_hp || '');
     setShowEditModal(true);
   };
 
@@ -543,13 +564,20 @@ export default function StatistikPage() {
       alert('NIK wajib diisi 16 digit');
       return;
     }
-    if (!nama || !alamat) {
+    if (!nama || (!viewOnly && !alamat)) {
       alert('Nama dan Alamat Rumah wajib diisi');
       return;
     }
 
     try {
-      await updateData('warga', editingId, {
+      // Warga hanya mengirim field yang boleh diubahnya; server juga membatasi.
+      await updateData('warga', editingId, viewOnly ? {
+        nama_lengkap: nama,
+        nik,
+        tanggal_lahir: tanggalLahir,
+        hubungan,
+        no_hp: noHp,
+      } : {
         nama_lengkap: nama,
         nik,
         tanggal_lahir: tanggalLahir,
@@ -573,7 +601,7 @@ export default function StatistikPage() {
       setNominalIuran(0);
     } catch (error) {
       console.error('[EDIT WARGA]', error);
-      alert('Gagal memperbarui data warga.');
+      alert(error instanceof Error && error.message ? error.message : 'Gagal memperbarui data warga.');
     }
   };
 
@@ -589,6 +617,7 @@ export default function StatistikPage() {
     }
 
     try {
+      // Untuk warga, server mengisi rt/rw/alamat/status/tarif/KK dari rumahnya sendiri.
       await addWarga({
         nama_lengkap: familyForm.nama,
         nik: familyForm.nik,
@@ -597,7 +626,8 @@ export default function StatistikPage() {
         status_tinggal: familyForm.status,
         rt: familyForm.rt,
         rw: '012',
-        nominal_iuran: familyForm.nominalIuran,
+        nominal_iuran: viewOnly ? 0 : familyForm.nominalIuran,
+        ...(viewOnly ? { hubungan: familyForm.hubungan, no_hp: familyForm.noHp } : {}),
       });
 
       setToast(`Anggota keluarga ${familyForm.nama} berhasil ditambahkan ke alamat ${familyModalAddress}.`);
@@ -610,12 +640,14 @@ export default function StatistikPage() {
         rt: selectedRt === 'ALL' ? '002' : selectedRt,
         status: 'Tetap',
         nominalIuran: 0,
+        hubungan: '',
+        noHp: '',
       });
       setFamilyModalAddress('');
       setFamilyModalNomor(1);
     } catch (error) {
       console.error('[ADD FAMILY MEMBER]', error);
-      alert('Gagal menambahkan anggota keluarga.');
+      alert(error instanceof Error && error.message ? error.message : 'Gagal menambahkan anggota keluarga.');
     }
   };
 
@@ -690,6 +722,19 @@ export default function StatistikPage() {
                   />
                 </div>
 
+                {viewOnly ? (
+                  <>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-300">Hubungan dalam KK</label>
+                      <input type="text" value={hubungan} onChange={(e) => setHubungan(e.target.value)} placeholder="Contoh: Istri, Anak" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-300">No HP</label>
+                      <input type="tel" inputMode="tel" value={noHp} onChange={(e) => setNoHp(e.target.value)} placeholder="08xxxxxxxxxx" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    </div>
+                  </>
+                ) : (
+                  <>
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-slate-300">Status Tempat Tinggal</label>
                   <select
@@ -737,6 +782,8 @@ export default function StatistikPage() {
                     ))}
                   </select>
                 </div>
+                  </>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
@@ -827,6 +874,19 @@ export default function StatistikPage() {
                   />
                 </div>
 
+                {viewOnly ? (
+                  <>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-300">Hubungan dalam KK</label>
+                      <input type="text" value={familyForm.hubungan} onChange={(e) => setFamilyForm({ ...familyForm, hubungan: e.target.value })} placeholder="Contoh: Istri, Anak" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-slate-300">No HP</label>
+                      <input type="tel" inputMode="tel" value={familyForm.noHp} onChange={(e) => setFamilyForm({ ...familyForm, noHp: e.target.value })} placeholder="08xxxxxxxxxx" className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                    </div>
+                  </>
+                ) : (
+                  <>
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-slate-300">Status Tempat Tinggal</label>
                   <select
@@ -863,6 +923,8 @@ export default function StatistikPage() {
                     ))}
                   </select>
                 </div>
+                  </>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
@@ -996,6 +1058,8 @@ export default function StatistikPage() {
 
       {/* Header */}
       <SortGroup attr="data-lo" storageKey="lo-statistik" className="space-y-6 sm:space-y-8">
+{!viewOnly && (
+<>
 <div data-lo="b1" className="bg-slate-900 border border-slate-800 p-5 sm:p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-white">Statistik & Demografi Kependudukan</h1>
@@ -1065,13 +1129,16 @@ export default function StatistikPage() {
         </div>
       </SortGroup>
 </div>
+</>
+)}
 
-      <BirthdayNotifications data-lo="b4" wargaList={filteredWarga} />
+      {!viewOnly && <BirthdayNotifications data-lo="b4" wargaList={filteredWarga} />}
 
       {/* Grid Content: Registration & Table */}
       <div data-lo="b5">
 <SortGroup attr="data-lo-p" storageKey="lo-statistik-b5" layout="stack" className="space-y-6 lg:space-y-8">
         {/* Input Form Warga */}
+        {!viewOnly && (
         <div data-lo-p="p1" className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
           <div className="flex items-center gap-3 mb-5 pb-4 border-b border-slate-800">
             <UserPlus className="w-5 h-5 text-emerald-400" />
@@ -1180,11 +1247,29 @@ export default function StatistikPage() {
             </button>
           </form>
         </div>
+        )}
+
+        {isMaster && alamatBermasalah && alamatBermasalah.jumlah > 0 && (
+          <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-4 sm:p-6 shadow-xl">
+            <h2 className="text-base font-bold text-amber-300">Alamat belum terbaca ({alamatBermasalah.jumlah} dari {alamatBermasalah.total} warga)</h2>
+            <p className="mt-1 text-xs text-slate-400">Format yang dikenali: blok huruf + angka + nomor rumah, mis. &quot;AM 19/01&quot;. Rapikan alamat berikut agar akun warganya bisa mencocokkan rumah.</p>
+            <ul className="mt-3 max-h-56 overflow-y-auto divide-y divide-slate-800 text-xs">
+              {alamatBermasalah.data.map((d) => (
+                <li key={d.id} className="flex flex-wrap gap-x-3 py-1.5">
+                  <span className="font-bold text-white">{d.nama_lengkap}</span>
+                  <span className="text-emerald-400">RT {d.rt}</span>
+                  <span className="font-mono text-slate-300">{d.alamat || '(kosong)'}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Table Warga */}
         <div data-lo-p="p2" className="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl">
           <div className="mb-4 flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-base sm:text-lg font-bold text-white">Daftar Warga Terdaftar (RT {selectedRt})</h2>
+            <h2 className="text-base sm:text-lg font-bold text-white">Daftar Warga Terdaftar ({viewOnly ? (groupedByAlamat[0]?.alamat || scopeUser?.username || '-') : selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`})</h2>
+            {!viewOnly && (
             <div className="flex flex-wrap items-center gap-2">
               <input
                 id="import-warga-excel"
@@ -1220,6 +1305,7 @@ export default function StatistikPage() {
                 Template
               </button>
             </div>
+            )}
           </div>
           
           <div className="overflow-x-auto rounded-xl border border-slate-800">
@@ -1228,6 +1314,7 @@ export default function StatistikPage() {
                       <tr>
                         <th className="px-4 py-3">Alamat</th>
                         <th className="px-4 py-3">Nama Lengkap</th>
+                        <th className="px-4 py-3">Hubungan dalam KK</th>
                         <th className="px-4 py-3">Usia</th>
                         <th className="px-4 py-3">Kategori usia</th>
                         <th className="px-4 py-3">NIK</th>
@@ -1260,6 +1347,7 @@ export default function StatistikPage() {
                             </td>
                           ) : null}
                           <td className="px-4 py-3 font-bold text-white whitespace-nowrap">{w.nama_lengkap}</td>
+                          <td className="px-4 py-3 text-xs text-slate-300 whitespace-nowrap">{w.hubungan || '-'}</td>
                           <td className="px-4 py-3 text-xs text-slate-300 whitespace-nowrap">{getAge(w.tanggal_lahir) ?? '-'}{getAge(w.tanggal_lahir) !== null ? ' tahun' : ''}</td>
                           <td className="px-4 py-3 whitespace-nowrap">
                             {getWargaAgeCategory(w) ? (
@@ -1285,6 +1373,7 @@ export default function StatistikPage() {
                           <td className="px-4 py-3 whitespace-nowrap text-xs font-mono text-sky-300">Rp {getWargaFinance(w).iuran17an.toLocaleString('id-ID')}</td>
                           <td className="px-4 py-3 text-right whitespace-nowrap">
                             <button onClick={() => openEditModal(w)} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-sky-500/30 bg-sky-500/10 text-sky-300 shadow-sm transition hover:bg-sky-500 hover:text-white" title="Edit Warga"><Pencil className="w-4 h-4" /></button>
+                            {!viewOnly && (
                             <button
                               onClick={() => handleDelete(w.id, w.nama_lengkap)}
                               className="ml-2 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-300 shadow-sm transition hover:bg-rose-500 hover:text-white"
@@ -1292,6 +1381,7 @@ export default function StatistikPage() {
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
+                            )}
                           </td>
                         </tr>
                 )))}

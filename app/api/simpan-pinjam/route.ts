@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { SimpanPinjamModel } from '@/lib/mongoose';
+import { getScope, denied, rtQuery, forceRt, lockRt, ownershipDenied } from '@/lib/scope.server';
 
 function serialize(doc: Record<string, unknown>) {
   const item = { ...doc };
@@ -12,9 +13,11 @@ function serialize(doc: Record<string, unknown>) {
 
 export async function GET(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
     await dbConnect();
     const rt = req.nextUrl.searchParams.get('rt');
-    const query = rt && rt !== 'ALL' ? { rt } : {};
+    const query = rtQuery(scope, rt);
     const docs = await SimpanPinjamModel.find(query).sort({ tanggal_transaksi: -1, created_at: -1 }).lean();
     return NextResponse.json(docs.map((doc) => serialize(doc as Record<string, unknown>)));
   } catch (error) {
@@ -25,8 +28,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
     const body = await req.json();
+    forceRt(scope, body);
     if (!body.nama || !body.alamat || !['Simpan', 'Pinjam', 'Cicilan'].includes(body.jenis) || Number(body.nominal) <= 0) {
       return NextResponse.json({ error: 'Data transaksi simpan pinjam tidak valid' }, { status: 400 });
     }
@@ -46,8 +53,14 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
     const { id, ...changes } = await req.json();
+    lockRt(scope, changes);
+    const denyOwn = await ownershipDenied(scope, SimpanPinjamModel, id);
+    if (denyOwn) return denyOwn;
     const doc = await SimpanPinjamModel.findByIdAndUpdate(id, changes, { new: true, runValidators: true });
     if (!doc) return NextResponse.json({ error: 'Transaksi tidak ditemukan' }, { status: 404 });
     return NextResponse.json(serialize(doc.toObject() as Record<string, unknown>));
@@ -59,9 +72,14 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
     const id = req.nextUrl.searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID transaksi wajib diisi' }, { status: 400 });
+    const denyOwn = await ownershipDenied(scope, SimpanPinjamModel, id);
+    if (denyOwn) return denyOwn;
     const doc = await SimpanPinjamModel.findByIdAndDelete(id);
     if (!doc) return NextResponse.json({ error: 'Transaksi tidak ditemukan' }, { status: 404 });
     return NextResponse.json({ success: true });

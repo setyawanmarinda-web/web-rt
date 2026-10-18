@@ -20,7 +20,7 @@ export default function DashboardOverviewPage() {
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold mb-3">
             <ShieldCheck className="w-4 h-4" />
-            <span>Selamat Datang Pengurus RT {selectedRt} / Admin RW 012</span>
+            <span>Selamat Datang Pengurus {selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`} / Admin RW 012</span>
           </div>
           <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight mb-2">
             Ringkasan Administrasi & Financial Panel RT
@@ -70,7 +70,7 @@ export default function DashboardOverviewPage() {
           <div className="text-2xl font-black text-white mb-1">
             {filteredWarga.length} KK / Jiwa
           </div>
-          <p className="text-xs text-slate-400">RT {selectedRt} Kelurahan Bahagia</p>
+          <p className="text-xs text-slate-400">{selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`} Kelurahan Bahagia</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
@@ -104,7 +104,7 @@ export default function DashboardOverviewPage() {
         
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-white">Mutasi Terakhir Kas RT {selectedRt}</h2>
+            <h2 className="text-lg font-bold text-white">Mutasi Terakhir Kas {selectedRt === 'ALL' ? 'RW 012' : `RT ${selectedRt}`}</h2>
             <Link href="/dashboard/kas" className="text-xs font-bold text-emerald-400 hover:underline flex items-center gap-1">
               <span>Lihat Semua</span>
               <ArrowRight className="w-3.5 h-3.5" />

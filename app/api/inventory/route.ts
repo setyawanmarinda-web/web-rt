@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { InventoryModel } from '@/lib/mongoose';
+import { getScope, denied, rtQuery, forceRt, ownershipDenied } from '@/lib/scope.server';
 
 // Helper: convert Mongoose doc ke plain object dengan id string
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,10 +20,12 @@ function toPlain(doc: any) {
 // tanpa rt = semua
 export async function GET(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
     await dbConnect();
 
     const rt = req.nextUrl.searchParams.get('rt');
-    const query = rt && rt !== 'ALL' ? { rt } : {};
+    const query = rtQuery(scope, rt);
 
     const docs = await InventoryModel
       .find(query)
@@ -54,9 +57,13 @@ export async function GET(req: NextRequest) {
 // POST /api/inventory
 export async function POST(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
 
     const body = await req.json();
+    forceRt(scope, body);
 
     const doc = await InventoryModel.create(body);
 
@@ -76,6 +83,9 @@ export async function POST(req: NextRequest) {
 // DELETE /api/inventory?id=xyz
 export async function DELETE(req: NextRequest) {
   try {
+    const scope = await getScope();
+    if (!scope) return denied(401, 'Belum login');
+    if (!scope.canWrite) return denied();
     await dbConnect();
 
     const id = req.nextUrl.searchParams.get('id');
@@ -87,6 +97,8 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    const denyOwn = await ownershipDenied(scope, InventoryModel, id);
+    if (denyOwn) return denyOwn;
     const doc = await InventoryModel.findByIdAndDelete(id);
 
     if (!doc) {
