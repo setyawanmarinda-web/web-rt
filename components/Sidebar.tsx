@@ -23,7 +23,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   Wallet, Calendar, Megaphone, ShoppingBag,
   BarChart3, FolderArchive, FileText, FileSpreadsheet, Settings, Package,
-  Shield, X, GripVertical, Trophy
+  Shield, X, GripVertical, Trophy, ChevronRight
 } from 'lucide-react';
 import { useScope, roleLabel, canSeeMenu } from '@/lib/scope';
 import { LayoutEditBar, sanitizeOrder, useLongPressEdit } from '@/components/LayoutEdit';
@@ -130,6 +130,27 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
   const seenReset = useRef(resetVersion);
   const [order, setOrder] = useState<string[]>(DEFAULT_ORDER);
 
+  // Desktop: menu menyembunyikan diri ke kiri bila 5 detik tidak disentuh; muncul lagi saat kursor ke tepi kiri.
+  const [hidden, setHidden] = useState(false);
+  const asideRef = useRef<HTMLElement>(null);
+  const hovered = useRef(false);
+  const timer = useRef<number | null>(null);
+  const arm = useRef<() => void>(() => {});
+  useEffect(() => {
+    const fire = () => {
+      // jangan sembunyi saat kursor di atasnya, ada fokus di dalamnya (mis. memilih RT), atau sedang mode ubah urutan menu
+      if (hovered.current || editing || asideRef.current?.contains(document.activeElement)) { arm.current(); return; }
+      setHidden(true);
+    };
+    arm.current = () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(fire, 5000);
+    };
+    if (!hidden) arm.current();
+    return () => { if (timer.current !== null) window.clearTimeout(timer.current); };
+  }, [hidden, editing]);
+  const poke = () => { if (!hidden) arm.current(); };
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -181,11 +202,27 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
         />
       )}
 
+      {/* Desktop, menu tersembunyi: area sentuh di tepi kiri + pegangan kecil untuk memunculkannya */}
+      {hidden && (
+        <>
+          <div className="hidden md:block fixed left-0 top-0 h-screen w-3 z-50" onMouseEnter={() => setHidden(false)} aria-hidden />
+          <button type="button" aria-label="Tampilkan menu" title="Tampilkan menu" onClick={() => setHidden(false)}
+            className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-50 h-24 w-4 items-center justify-center rounded-r-lg bg-emerald-500/70 hover:bg-emerald-400 text-slate-950 shadow-[0_0_14px_#10b98188] transition-colors">
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </>
+      )}
+
       <aside
-        className={`w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col h-screen fixed md:sticky top-0 left-0 z-50 transition-transform duration-300 ease-in-out ${
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        }`}
+        ref={asideRef}
+        onMouseEnter={() => { hovered.current = true; poke(); }}
+        onMouseLeave={() => { hovered.current = false; poke(); }}
+        onMouseMove={poke} onPointerDown={poke} onFocus={poke} onWheel={poke} onTouchStart={poke}
+        className={`w-64 bg-slate-900 border-r border-slate-800 text-slate-300 h-screen fixed md:sticky top-0 left-0 z-50 transition-[transform,width] duration-300 ease-in-out md:overflow-hidden ${
+          hidden ? 'md:w-0 md:border-r-0' : 'md:w-64'
+        } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
+        <div className="w-64 h-full flex flex-col shrink-0">
         {/* Header with Close button on Mobile */}
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <Link href="/" title="Ke Halaman Publik RW" className="flex items-center gap-3 rounded-lg hover:opacity-80 transition-opacity">
@@ -265,6 +302,7 @@ export default function Sidebar({ selectedRt, onRtChange, isMobileOpen, onMobile
               <p className="text-[11px] text-slate-400 truncate">Hak Akses: {roleLabel(scopeUser)}</p>
             </div>
           </div>
+        </div>
         </div>
       </aside>
     </>
