@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DatePickerFieldProps {
@@ -27,6 +28,26 @@ export default function DatePickerField({
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [yearInput, setYearInput] = useState(new Date().getFullYear().toString());
   const containerRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+  // Kalender dirender di luar jendela induk (portal, posisi fixed) agar tidak terpotong oleh
+  // overflow/scroll modal; selalu ditampilkan utuh di dalam layar (dibalik ke atas bila perlu).
+  const place = useCallback(() => {
+    const b = btnRef.current?.getBoundingClientRect();
+    if (!b) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const width = Math.min(320, vw - 16);
+    const h = popupRef.current?.offsetHeight ?? 430;
+    const left = Math.min(Math.max(8, b.left), vw - width - 8);
+    let top = b.bottom + 8;
+    if (top + h > vh - 8) {
+      const above = b.top - h - 8;
+      top = above >= 8 ? above : Math.max(8, vh - h - 8);
+    }
+    setPos({ top, left, width });
+  }, []);
 
   const monthNames = [
     'Januari',
@@ -126,6 +147,7 @@ export default function DatePickerField({
     }
 
     setShowMonthYearPicker(false);
+    place();
     setIsOpen(!isOpen);
   };
 
@@ -171,9 +193,11 @@ export default function DatePickerField({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      const t = e.target as Node;
       if (
         containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
+        !containerRef.current.contains(t) &&
+        !popupRef.current?.contains(t)
       ) {
         setIsOpen(false);
         setShowMonthYearPicker(false);
@@ -188,6 +212,19 @@ export default function DatePickerField({
       };
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const again = () => place();
+    const raf = requestAnimationFrame(again); // ukur ulang setelah kalender tampil
+    window.addEventListener('resize', again);
+    window.addEventListener('scroll', again, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', again);
+      window.removeEventListener('scroll', again, true);
+    };
+  }, [isOpen, showMonthYearPicker, place]);
 
   useEffect(() => {
     if (value) {
@@ -247,6 +284,7 @@ export default function DatePickerField({
       </label>
 
       <button
+        ref={btnRef}
         type="button"
         onClick={handleOpen}
         className={`w-full bg-slate-950 border ${themeColor.border}/50 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 text-left transition-all`}
@@ -260,8 +298,12 @@ export default function DatePickerField({
         )}
       </button>
 
-      {isOpen && (
-        <div className="absolute top-full left-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 p-4 w-80">
+      {isOpen && pos && createPortal(
+        <div
+          ref={popupRef}
+          style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width }}
+          className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-[100] p-4"
+        >
 
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
@@ -424,7 +466,8 @@ export default function DatePickerField({
               </button>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

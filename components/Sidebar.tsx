@@ -23,7 +23,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   Wallet, Calendar, Megaphone, ShoppingBag,
   BarChart3, FolderArchive, FileText, FileSpreadsheet, Settings, Package,
-  Shield, X, GripVertical
+  Shield, X, GripVertical, Trophy
 } from 'lucide-react';
 import { useScope, roleLabel, canSeeMenu } from '@/lib/scope';
 import { LayoutEditBar, sanitizeOrder, useLongPressEdit } from '@/components/LayoutEdit';
@@ -39,6 +39,7 @@ interface SidebarProps {
 const MENU_ITEMS = [
   { href: '/dashboard/kas', label: 'Kas & Iuran Warga', icon: Wallet },
   { href: '/dashboard/kegiatan', label: 'Agenda Kegiatan', icon: Calendar },
+  { href: '/dashboard/17an', label: 'Agenda 17an', icon: Trophy },
   { href: '/dashboard/pengumuman', label: 'Pengumuman', icon: Megaphone },
   { href: '/dashboard/surat', label: 'Layanan Surat', icon: FileText },
   { href: '/dashboard/statistik', label: 'Statistik Warga', icon: BarChart3 },

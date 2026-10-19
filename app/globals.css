@@ -59,3 +59,5 @@ html[data-theme='light'] {
   --color-violet-400: #7c3aed;
   --color-purple-400: #9333ea;
 }
+
+@keyframes bell-ring { 0%,100% { transform: rotate(0) } 10%,30% { transform: rotate(-14deg) } 20%,40% { transform: rotate(14deg) } 50% { transform: rotate(0) } }
