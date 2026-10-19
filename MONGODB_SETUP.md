@@ -40,7 +40,7 @@
 ```bash
 cat /Users/boun/GIT/RT/web-rt-1/.env
 # Should show:
-# MONGO_URI=mongodb+srv://Boun:boun2064@rt002.r5ojmwd.mongodb.net/?appName=RT002
+# MONGO_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/?appName=<app>
 ```
 
 ### Step 2: Start Next.js Dev Server

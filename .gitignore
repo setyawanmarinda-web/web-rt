@@ -43,3 +43,8 @@ next-env.d.ts
 *.bak2
 *.bak.tsx
 *.v2.bak.tsx
+
+# berkas lokal / rahasia
+*.bak*
+*.patch
+scripts/akun.mjs

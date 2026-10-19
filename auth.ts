@@ -7,6 +7,11 @@ import dbConnect from '@/lib/dbConnect';
 import { UserModel } from '@/lib/userModel';
 import { normUsername } from '@/lib/username';
 
+// Pembatas percobaan login (per username, di memori instance): 5 gagal -> terkunci 15 menit.
+const gagal = new Map<string, { n: number; sampai: number }>();
+const MAKS_GAGAL = 5;
+const KUNCI_MS = 15 * 60 * 1000;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: 'jwt', maxAge: 60 * 60 * 8 },
   pages: { signIn: '/login' },
@@ -18,12 +23,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const password = String(creds?.password ?? '');
         if (!username || !password) return null;
 
-        await dbConnect();
         const key = normUsername(username);
+        const rec = gagal.get(key);
+        if (rec && rec.sampai > Date.now()) return null;
+        const catatGagal = () => {
+          const r = gagal.get(key);
+          const n = (r && r.sampai > Date.now() - KUNCI_MS ? r.n : 0) + 1;
+          gagal.set(key, { n, sampai: n >= MAKS_GAGAL ? Date.now() + KUNCI_MS : 0 });
+          if (gagal.size > 5000) gagal.clear();
+        };
+
+        await dbConnect();
         let u: any = await UserModel.findOne({ username_key: key, aktif: true }).lean();
         if (!u) u = await UserModel.findOne({ username, aktif: true }).lean();
-        if (!u) return null;
-        if (!(await bcrypt.compare(password, u.password_hash))) return null;
+        if (!u) { catatGagal(); return null; }
+        if (!(await bcrypt.compare(password, u.password_hash))) { catatGagal(); return null; }
+        gagal.delete(key);
 
         return {
           id: String(u._id),
