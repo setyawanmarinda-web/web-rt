@@ -22,7 +22,7 @@ export default function Agenda17anPage() {
   const data = useBeranda17an();
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       <header className="flex items-center gap-3">
         <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400"><Trophy className="w-6 h-6" /></div>
         <div>

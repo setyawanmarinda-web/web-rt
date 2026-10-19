@@ -84,8 +84,23 @@ export default function BracketView({ matches, participants, onSelect, layout = 
   const third = matches.find((m) => m.third);
   const final = total ? ko.reduce((a, b) => (b.round > a.round ? b : a)) : undefined;
   const inner = useRef<HTMLDivElement>(null);
+  const wrap = useRef<HTMLDivElement>(null);
+  const [avail, setAvail] = useState(0); // lebar area bagan -> kartu & jarak kolom disesuaikan agar muat (FIT), tidak disimpan
   const [lines, setLines] = useState<Line[]>([]);
   const [labels, setLabels] = useState<Record<string, { left: number; width: number; top: number }>>({}); // judul kolom mengikuti kartu
+
+  useLayoutEffect(() => {
+    const el = wrap.current;
+    if (!el) return;
+    const read = () => setAvail(el.clientWidth);
+    read();
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [total]);
+  const natural = total * (tata.cardW + tata.gapX) + 176 + 32;
+  const fit = avail ? Math.max(0.55, Math.min(1.25, avail / natural)) : 1;
+  const cardW = Math.round(tata.cardW * fit), gapX = Math.round(tata.gapX * fit), juaraW = Math.round(176 * fit);
 
   const roundList = (r: number) => {
     const base = ko.filter((m) => m.round === r).sort((a, b) => a.index - b.index);
@@ -151,7 +166,7 @@ export default function BracketView({ matches, participants, onSelect, layout = 
   const palette = (r: number) => (tata.borderMode === 'babak' ? NEON[(r - 1) % NEON.length] : tata.borderMode === 'satu' ? tata.colors.border : undefined);
   const stroke = tata.colors;
 
-  const sig = ko.map((m) => `${m.id}:${m.winner ?? ''}:${m.a ?? ''}:${m.b ?? ''}`).join('|') + JSON.stringify(tata) + (editing ? 'E' : '') + (third ? third.id + (third.winner ?? '') + (third.a ?? '') + (third.b ?? '') : '');
+  const sig = ko.map((m) => `${m.id}:${m.winner ?? ''}:${m.a ?? ''}:${m.b ?? ''}`).join('|') + JSON.stringify(tata) + `|${cardW}|${gapX}` + (editing ? 'E' : '') + (third ? third.id + (third.winner ?? '') + (third.a ?? '') + (third.b ?? '') : '');
   useLayoutEffect(() => {
     const root = inner.current;
     if (!root) return;
@@ -173,7 +188,7 @@ export default function BracketView({ matches, participants, onSelect, layout = 
         const f = pos(fromId), t = pos(toId);
         if (!f || !t) return;
         const x1 = f.r, y1 = f.y, x2 = t.l - 2, y2 = t.y;
-        const xm = Math.max(x1 + 4, t.l - tata.gapX / 2);
+        const xm = Math.max(x1 + 4, t.l - gapX / 2);
         const d = tata.lineStyle === 'lurus' ? `M${x1} ${y1} L${x2} ${y2}`
           : tata.lineStyle === 'lengkung' ? `M${x1} ${y1} C${xm} ${y1}, ${xm} ${y2}, ${x2} ${y2}`
           : `M${x1} ${y1} H${xm} V${y2} H${x2}`;
@@ -244,9 +259,9 @@ export default function BracketView({ matches, participants, onSelect, layout = 
   return (
     <div className="space-y-2">
       <style>{`@keyframes tw-wiggle{0%,100%{transform:rotate(-1.1deg)}50%{transform:rotate(1.1deg)}}.tw-wiggle{animation:tw-wiggle .26s ease-in-out infinite}`}</style>
-      <div className="overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div ref={wrap} className="overflow-x-auto pb-2">
         <div className="inline-block min-w-full bg-slate-950 p-4 rounded-xl">
-        <div ref={inner} className="relative flex min-w-max" style={{ gap: tata.gapX }}>
+        <div ref={inner} className="relative flex min-w-max" style={{ gap: gapX }}>
           <svg className="absolute inset-0 w-full h-full z-0 pointer-events-none" aria-hidden>
             <defs>
               {(['idle', 'done', 'loser'] as const).map((k) => (
@@ -279,7 +294,7 @@ export default function BracketView({ matches, participants, onSelect, layout = 
               style={{ left: labels.j.left, top: labels.j.top, width: labels.j.width, transform: 'translateY(-100%)' }}>Juara</div>
           )}
           {Array.from({ length: total }, (_, i) => i + 1).map((r) => (
-            <div key={r} className="flex flex-col shrink-0" style={{ width: tata.cardW }}>
+            <div key={r} className="flex flex-col shrink-0" style={{ width: cardW }}>
               <div aria-hidden className="text-[11px] font-semibold uppercase tracking-wide mb-2 invisible">{roundName(r, total, layout)}</div>
               <div className="flex-1 flex flex-col justify-around" style={{ gap: tata.gapY }}>
                 {roundList(r).map((m, i) => (
@@ -306,7 +321,7 @@ export default function BracketView({ matches, participants, onSelect, layout = 
               </div>
             </div>
           ))}
-          <div className="w-44 shrink-0 flex flex-col">
+          <div className="shrink-0 flex flex-col" style={{ width: juaraW }}>
             <div aria-hidden className="text-[11px] font-semibold uppercase tracking-wide mb-2 invisible">Juara</div>
             <div className="flex-1 flex flex-col justify-center gap-3">
               {slot('__j1', '🥇', 'Juara 1', champ, 'Pemenang Final', 'border-amber-400/60 bg-amber-500/10 text-amber-200', 0)}
